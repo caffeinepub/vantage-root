@@ -13,6 +13,13 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const SessionInfo = IDL.Record({
+  'timezone' : IDL.Text,
+  'loginTime' : IDL.Int,
+  'token' : IDL.Text,
+  'ipHint' : IDL.Text,
+  'deviceInfo' : IDL.Text,
+});
 export const Status = IDL.Variant({
   'new' : IDL.Null,
   'completed' : IDL.Null,
@@ -58,12 +65,15 @@ export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'blockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
   'getAllConsultationRequests' : IDL.Func(
       [],
       [IDL.Vec(ConsultationRequest)],
       ['query'],
     ),
+  'getBlockedSessions' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
@@ -73,6 +83,13 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+  'registerAdminSession' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Bool],
+      [],
+    ),
+  'removeAdminSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'submitConsultationRequest' : IDL.Func(
       [
@@ -87,6 +104,7 @@ export const idlService = IDL.Service({
       [IDL.Bool],
       [],
     ),
+  'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
   'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
 });
@@ -98,6 +116,13 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const SessionInfo = IDL.Record({
+    'timezone' : IDL.Text,
+    'loginTime' : IDL.Int,
+    'token' : IDL.Text,
+    'ipHint' : IDL.Text,
+    'deviceInfo' : IDL.Text,
   });
   const Status = IDL.Variant({
     'new' : IDL.Null,
@@ -144,12 +169,15 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'blockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
     'getAllConsultationRequests' : IDL.Func(
         [],
         [IDL.Vec(ConsultationRequest)],
         ['query'],
       ),
+    'getBlockedSessions' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
@@ -159,6 +187,13 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'registerAdminSession' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Bool],
+        [],
+      ),
+    'removeAdminSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'submitConsultationRequest' : IDL.Func(
         [
@@ -173,6 +208,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
     'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
   });

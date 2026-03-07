@@ -79,7 +79,7 @@ export default function ConsultPage() {
             <ArrowLeft size={14} />
             Back to Home
           </Link>
-          <h1 className="font-display text-4xl md:text-5xl font-light text-white">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-light text-white">
             Book a Free
             <em className="block italic text-[oklch(0.62_0.12_45)] mt-1">
               Consultation
@@ -472,7 +472,7 @@ export default function ConsultPage() {
               "Every great balcony starts with one conversation."
             </p>
             <p className="text-xs text-[oklch(0.60_0.04_45)] font-sans tracking-wider uppercase">
-              — Vantage Root
+              — Florilic
             </p>
           </div>
 
@@ -482,10 +482,10 @@ export default function ConsultPage() {
               Prefer email?
             </p>
             <a
-              href="mailto:hello@vantageroot.co"
+              href="mailto:hello@florilic.co"
               className="text-[oklch(0.62_0.12_45)] font-sans text-sm hover:underline"
             >
-              hello@vantageroot.co
+              hello@florilic.co
             </a>
           </div>
         </aside>
@@ -494,7 +494,7 @@ export default function ConsultPage() {
       {/* Footer strip */}
       <div className="border-t border-[oklch(0.25_0.05_150)] py-6 px-6 mt-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[oklch(0.48_0.025_140)]">
-          <p>© {new Date().getFullYear()} Vantage Root. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Florilic. All rights reserved.</p>
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
             target="_blank"

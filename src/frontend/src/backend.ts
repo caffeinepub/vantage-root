@@ -89,6 +89,13 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface SessionInfo {
+    timezone: string;
+    loginTime: bigint;
+    token: string;
+    ipHint: string;
+    deviceInfo: string;
+}
 export type Time = bigint;
 export interface ConsultationRequest {
     id: bigint;
@@ -140,15 +147,22 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    blockSession(token: string): Promise<boolean>;
     deleteConsultationRequest(id: bigint): Promise<boolean>;
+    getAllAdminSessions(): Promise<Array<SessionInfo>>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
+    getBlockedSessions(): Promise<Array<string>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConsultationRequestCount(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    isSessionBlocked(token: string): Promise<boolean>;
+    registerAdminSession(token: string, deviceInfo: string, timezone: string, ipHint: string): Promise<boolean>;
+    removeAdminSession(token: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    unblockSession(token: string): Promise<boolean>;
     updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
     updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
 }
@@ -183,6 +197,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async blockSession(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.blockSession(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.blockSession(arg0);
+            return result;
+        }
+    }
     async deleteConsultationRequest(arg0: bigint): Promise<boolean> {
         if (this.processError) {
             try {
@@ -194,6 +222,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteConsultationRequest(arg0);
+            return result;
+        }
+    }
+    async getAllAdminSessions(): Promise<Array<SessionInfo>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllAdminSessions();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllAdminSessions();
             return result;
         }
     }
@@ -209,6 +251,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAllConsultationRequests();
             return from_candid_vec_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getBlockedSessions(): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBlockedSessions();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBlockedSessions();
+            return result;
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
@@ -281,6 +337,48 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isSessionBlocked(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isSessionBlocked(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isSessionBlocked(arg0);
+            return result;
+        }
+    }
+    async registerAdminSession(arg0: string, arg1: string, arg2: string, arg3: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.registerAdminSession(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.registerAdminSession(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async removeAdminSession(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeAdminSession(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeAdminSession(arg0);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -306,6 +404,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n20(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n21(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n23(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n25(this._uploadFile, this._downloadFile, arg5), arg6);
+            return result;
+        }
+    }
+    async unblockSession(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.unblockSession(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.unblockSession(arg0);
             return result;
         }
     }

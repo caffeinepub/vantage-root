@@ -29,6 +29,13 @@ export interface ConsultationRequest {
 export type Priority = { 'low' : null } |
   { 'high' : null } |
   { 'medium' : null };
+export interface SessionInfo {
+  'timezone' : string,
+  'loginTime' : bigint,
+  'token' : string,
+  'ipHint' : string,
+  'deviceInfo' : string,
+}
 export type Status = { 'new' : null } |
   { 'completed' : null } |
   { 'inProgress' : null };
@@ -47,13 +54,22 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'blockSession' : ActorMethod<[string], boolean>,
   'deleteConsultationRequest' : ActorMethod<[bigint], boolean>,
+  'getAllAdminSessions' : ActorMethod<[], Array<SessionInfo>>,
   'getAllConsultationRequests' : ActorMethod<[], Array<ConsultationRequest>>,
+  'getBlockedSessions' : ActorMethod<[], Array<string>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getConsultationRequestCount' : ActorMethod<[], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isSessionBlocked' : ActorMethod<[string], boolean>,
+  'registerAdminSession' : ActorMethod<
+    [string, string, string, string],
+    boolean
+  >,
+  'removeAdminSession' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'submitConsultationRequest' : ActorMethod<
     [
@@ -67,6 +83,7 @@ export interface _SERVICE {
     ],
     boolean
   >,
+  'unblockSession' : ActorMethod<[string], boolean>,
   'updateRequestPriority' : ActorMethod<[bigint, Priority], boolean>,
   'updateRequestStatus' : ActorMethod<[bigint, Status], boolean>,
 }

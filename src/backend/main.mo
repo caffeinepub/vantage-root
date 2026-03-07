@@ -3,8 +3,10 @@ import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 import Order "mo:core/Order";
 import List "mo:core/List";
+import Text "mo:core/Text";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
@@ -40,6 +42,14 @@ actor {
     name : Text;
   };
 
+  public type SessionInfo = {
+    token : Text;
+    deviceInfo : Text;
+    timezone : Text;
+    loginTime : Int;
+    ipHint : Text;
+  };
+
   // Data stores
   let requests = Map.empty<Nat, ConsultationRequest>();
   var currentId = 0;
@@ -48,6 +58,8 @@ actor {
   include MixinAuthorization(accessControlState);
 
   let userProfiles = Map.empty<Principal, UserProfile>();
+  let sessions = Map.empty<Text, SessionInfo>();
+  let blocklist = Map.empty<Text, ()>();
 
   // User profile functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -71,7 +83,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Public consultation request functions without authorization checks
+  // Public consultation request functions - guests can submit, admins can manage
   public shared ({ caller }) func submitConsultationRequest(
     name : Text,
     email : Text,
@@ -81,6 +93,7 @@ actor {
     stylePreference : StylePreference,
     message : Text,
   ) : async Bool {
+    // No authorization check - anyone including guests can submit consultation requests
     let request : ConsultationRequest = {
       id = currentId;
       name;
@@ -92,7 +105,7 @@ actor {
       message;
       timestamp = Time.now();
       priority = #medium;
-      status = #new_; // New requests default to "new_"
+      status = #new_;
     };
     requests.add(currentId, request);
     currentId += 1;
@@ -100,6 +113,9 @@ actor {
   };
 
   public query ({ caller }) func getAllConsultationRequests() : async [ConsultationRequest] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all consultation requests");
+    };
     let allRequests = List.empty<ConsultationRequest>();
     for (request in requests.values()) {
       allRequests.add(request);
@@ -108,10 +124,16 @@ actor {
   };
 
   public query ({ caller }) func getConsultationRequestCount() : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view consultation request count");
+    };
     requests.size();
   };
 
   public shared ({ caller }) func deleteConsultationRequest(id : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can delete consultation requests");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?_request) {
@@ -122,6 +144,9 @@ actor {
   };
 
   public shared ({ caller }) func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update request priority");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -133,6 +158,9 @@ actor {
   };
 
   public shared ({ caller }) func updateRequestStatus(id : Nat, status : Status) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update request status");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -141,5 +169,80 @@ actor {
         true;
       };
     };
+  };
+
+  // Session management functions - all admin-only
+  public shared ({ caller }) func registerAdminSession(token : Text, deviceInfo : Text, timezone : Text, ipHint : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can register admin sessions");
+    };
+    if (blocklist.containsKey(token)) { return false };
+
+    let sessionInfo : SessionInfo = {
+      token;
+      deviceInfo;
+      timezone;
+      loginTime = Time.now();
+      ipHint;
+    };
+
+    sessions.add(token, sessionInfo);
+    true;
+  };
+
+  public query ({ caller }) func getAllAdminSessions() : async [SessionInfo] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all admin sessions");
+    };
+    sessions.values().toArray();
+  };
+
+  public shared ({ caller }) func removeAdminSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can remove admin sessions");
+    };
+    switch (sessions.get(token)) {
+      case (null) { false };
+      case (?_session) {
+        sessions.remove(token);
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func blockSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can block sessions");
+    };
+    blocklist.add(token, ());
+    sessions.remove(token);
+    true;
+  };
+
+  public shared ({ caller }) func unblockSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can unblock sessions");
+    };
+    switch (blocklist.get(token)) {
+      case (null) { false };
+      case (?_block) {
+        blocklist.remove(token);
+        true;
+      };
+    };
+  };
+
+  public query ({ caller }) func isSessionBlocked(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can check if sessions are blocked");
+    };
+    blocklist.containsKey(token);
+  };
+
+  public query ({ caller }) func getBlockedSessions() : async [Text] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view blocked sessions");
+    };
+    blocklist.keys().toArray();
   };
 };

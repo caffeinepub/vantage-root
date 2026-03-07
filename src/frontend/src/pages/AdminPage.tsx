@@ -39,12 +39,13 @@ import {
   ListFilter,
   Lock,
   LogOut,
+  Monitor,
   ShieldAlert,
   Trash2,
   User,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ConsultationRequest } from "../backend.d";
 import { Priority, Status } from "../backend.d";
 import { useActor } from "../hooks/useActor";
@@ -56,7 +57,8 @@ import {
 
 // Hardcoded admin credentials
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "vantageroot2024";
+const ADMIN_PASSWORD = "florilic2024";
+const SESSION_KEY = "florilic_admin_session";
 
 function formatDate(timestamp: bigint) {
   const ms = Number(timestamp) / 1_000_000;
@@ -208,12 +210,28 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [credError, setCredError] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    // Restore login state if session token exists in localStorage
+    return !!localStorage.getItem(SESSION_KEY);
+  });
   const [sortMode, setSortMode] = useState<SortMode>("date-desc");
   const [deleteTargetId, setDeleteTargetId] = useState<bigint | null>(null);
 
   const { actor, isFetching: isActorFetching } = useActor();
   const queryClient = useQueryClient();
+
+  // On actor ready, check if the stored session token is blocked
+  useEffect(() => {
+    if (!actor || isActorFetching) return;
+    const token = localStorage.getItem(SESSION_KEY);
+    if (!token) return;
+    void actor.isSessionBlocked(token).then((blocked) => {
+      if (blocked) {
+        localStorage.removeItem(SESSION_KEY);
+        setIsLoggedIn(false);
+      }
+    });
+  }, [actor, isActorFetching]);
 
   const {
     data: requests,
@@ -266,6 +284,18 @@ export default function AdminPage() {
     e.preventDefault();
     setCredError("");
     if (username.trim() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // Generate a session token and register it with the backend
+      const token = crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, token);
+      if (actor) {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        void actor.registerAdminSession(
+          token,
+          navigator.userAgent,
+          timezone,
+          "",
+        );
+      }
       setIsLoggedIn(true);
       // Invalidate so queries re-run now that isLoggedIn is true
       void queryClient.invalidateQueries({
@@ -280,6 +310,11 @@ export default function AdminPage() {
   }
 
   function handleSignOut() {
+    const token = localStorage.getItem(SESSION_KEY);
+    if (token && actor) {
+      void actor.removeAdminSession(token);
+    }
+    localStorage.removeItem(SESSION_KEY);
     setIsLoggedIn(false);
     setUsername("");
     setPassword("");
@@ -360,7 +395,7 @@ export default function AdminPage() {
           </Link>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="font-display text-4xl font-light text-white">
+              <h1 className="font-display text-3xl sm:text-4xl font-light text-white">
                 Admin Panel
               </h1>
               <p className="text-[oklch(0.62_0.04_140)] text-sm font-sans mt-1">
@@ -385,16 +420,26 @@ export default function AdminPage() {
                 </div>
               )}
               {isLoggedIn && (
-                <Button
-                  data-ocid="admin.secondary_button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="border-[oklch(0.35_0.05_150)] text-[oklch(0.72_0.04_140)] hover:bg-[oklch(0.23_0.06_150)] hover:text-white rounded-sm font-sans flex items-center gap-2"
-                >
-                  <LogOut size={14} />
-                  Sign Out
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    to="/admin/sessions"
+                    data-ocid="admin.sessions_button"
+                    className="inline-flex items-center gap-2 border border-[oklch(0.35_0.05_150)] text-[oklch(0.72_0.04_140)] hover:bg-[oklch(0.23_0.06_150)] hover:text-white rounded-sm font-sans text-sm h-9 px-3 transition-colors"
+                  >
+                    <Monitor size={14} />
+                    Manage Sessions
+                  </Link>
+                  <Button
+                    data-ocid="admin.secondary_button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="border-[oklch(0.35_0.05_150)] text-[oklch(0.72_0.04_140)] hover:bg-[oklch(0.23_0.06_150)] hover:text-white rounded-sm font-sans flex items-center gap-2"
+                  >
+                    <LogOut size={14} />
+                    Sign Out
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -576,7 +621,7 @@ export default function AdminPage() {
                 requests.length > 0 && (
                   <div>
                     {/* Sort bar */}
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
                       <span className="text-[oklch(0.58_0.03_140)] text-xs font-sans uppercase tracking-wider mr-1">
                         Sort:
                       </span>
@@ -609,7 +654,10 @@ export default function AdminPage() {
                         }`}
                       >
                         <Flame size={12} />
-                        Priority (High → Low)
+                        <span className="hidden sm:inline">
+                          Priority (High → Low)
+                        </span>
+                        <span className="sm:hidden">Priority</span>
                       </button>
                       <button
                         type="button"
@@ -622,7 +670,10 @@ export default function AdminPage() {
                         }`}
                       >
                         <ListFilter size={12} />
-                        Status (New → Completed)
+                        <span className="hidden sm:inline">
+                          Status (New → Completed)
+                        </span>
+                        <span className="sm:hidden">Status</span>
                       </button>
                     </div>
 

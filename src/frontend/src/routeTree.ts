@@ -8,6 +8,7 @@ import Layout from "./components/Layout";
 import AdminPage from "./pages/AdminPage";
 import ConsultPage from "./pages/ConsultPage";
 import HomePage from "./pages/HomePage";
+import SessionsPage from "./pages/SessionsPage";
 
 const rootRoute = createRootRoute({
   component: Layout,
@@ -31,10 +32,17 @@ const adminRoute = createRoute({
   component: AdminPage,
 });
 
+const adminSessionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/sessions",
+  component: SessionsPage,
+});
+
 export const routeTree = rootRoute.addChildren([
   indexRoute,
   consultRoute,
   adminRoute,
+  adminSessionsRoute,
 ]);
 
 export { Outlet };

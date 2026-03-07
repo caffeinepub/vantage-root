@@ -269,7 +269,7 @@ export default function HomePage() {
 
           <motion.h1
             variants={fadeUp}
-            className="font-display text-5xl md:text-7xl lg:text-8xl font-light text-white leading-[1.05] tracking-tight mb-6"
+            className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-light text-white leading-[1.05] tracking-tight mb-6"
           >
             Transform Your Balcony
             <span className="block italic text-[oklch(0.88_0.04_140)] mt-1">
@@ -366,9 +366,9 @@ export default function HomePage() {
             {/* Right: solution */}
             <motion.div variants={fadeUp} className="relative">
               <div className="absolute -top-6 -left-6 w-32 h-32 rounded-full bg-[oklch(0.62_0.12_45/0.12)] blur-2xl" />
-              <div className="relative bg-gradient-to-br from-[oklch(0.28_0.07_150)] to-[oklch(0.22_0.06_150)] border border-[oklch(0.35_0.06_150)] rounded-sm p-10">
+              <div className="relative bg-gradient-to-br from-[oklch(0.28_0.07_150)] to-[oklch(0.22_0.06_150)] border border-[oklch(0.35_0.06_150)] rounded-sm p-6 md:p-10">
                 <span className="block text-[oklch(0.62_0.12_45)] text-sm font-semibold tracking-[0.2em] uppercase mb-4">
-                  The Vantage Root Solution
+                  The Florilic Solution
                 </span>
                 <p className="font-display text-3xl font-light text-white leading-tight mb-6">
                   One call. One design.
@@ -504,7 +504,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
-            className="relative max-w-2xl"
+            className="relative w-full max-w-2xl"
           >
             {/* Vertical timeline spine */}
             <div className="absolute left-[2.35rem] top-10 bottom-10 w-px bg-gradient-to-b from-[oklch(0.62_0.12_45/0.6)] via-[oklch(0.45_0.09_140/0.4)] to-transparent hidden md:block" />
@@ -513,7 +513,7 @@ export default function HomePage() {
               <motion.div
                 key={step.num}
                 variants={fadeUp}
-                className="group relative flex gap-8 mb-10 last:mb-0"
+                className="group relative flex gap-4 md:gap-8 mb-10 last:mb-0"
               >
                 {/* Number bubble */}
                 <div className="relative z-10 shrink-0 w-[4.7rem] h-[4.7rem] rounded-full bg-[oklch(0.22_0.06_150)] border border-[oklch(0.62_0.12_45/0.4)] flex items-center justify-center group-hover:border-[oklch(0.62_0.12_45)] transition-colors duration-300">
@@ -547,7 +547,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
-            className="grid md:grid-cols-2 gap-16 items-center"
+            className="grid md:grid-cols-2 gap-8 md:gap-16 items-center"
           >
             {/* Image */}
             <motion.div
@@ -628,7 +628,7 @@ export default function HomePage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={stagger}
-            className="grid md:grid-cols-2 gap-16 items-center"
+            className="grid md:grid-cols-2 gap-8 md:gap-16 items-center"
           >
             {/* Text */}
             <motion.div variants={stagger}>
@@ -689,7 +689,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Balcony Transformation ─────────────────────────────── */}
-      <section className="relative py-28 md:py-40 px-6 overflow-hidden">
+      <section className="relative py-16 md:py-28 lg:py-40 px-6 overflow-hidden">
         {/* Background image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -714,7 +714,7 @@ export default function HomePage() {
             </motion.span>
             <motion.h2
               variants={fadeUp}
-              className="font-display text-5xl md:text-7xl font-light text-white leading-tight mb-6"
+              className="font-display text-4xl sm:text-5xl md:text-7xl font-light text-white leading-tight mb-6"
             >
               Not just plants.
               <em className="block italic text-[oklch(0.88_0.04_140)] mt-1">
@@ -760,7 +760,7 @@ export default function HomePage() {
             </motion.span>
             <motion.h2
               variants={fadeUp}
-              className="font-display text-5xl md:text-6xl font-light text-foreground leading-tight"
+              className="font-display text-4xl sm:text-5xl md:text-6xl font-light text-foreground leading-tight"
             >
               Designed for
               <em className="block italic text-[oklch(0.45_0.09_140)]">
@@ -817,7 +817,7 @@ export default function HomePage() {
             </motion.span>
             <motion.h2
               variants={fadeUp}
-              className="font-display text-5xl md:text-6xl font-light text-white leading-tight mb-6"
+              className="font-display text-4xl sm:text-5xl md:text-6xl font-light text-white leading-tight mb-6"
             >
               Ready to transform
               <em className="block italic text-[oklch(0.88_0.04_140)]">
@@ -851,20 +851,20 @@ export default function HomePage() {
             {/* Brand */}
             <div className="text-center md:text-left">
               <img
-                src="/assets/generated/logo-mark-transparent.dim_400x200.png"
-                alt="Vantage Root"
+                src="/assets/generated/florilic-logo-white-transparent.dim_800x200.png"
+                alt="Florilic"
                 className="h-10 w-auto mb-3 mx-auto md:mx-0"
               />
               <p className="font-display text-lg italic text-[oklch(0.62_0.12_45)] mb-1">
                 Balconies. Designed. Grown.
               </p>
               <p className="text-sm text-[oklch(0.55_0.03_140)]">
-                hello@vantageroot.co
+                hello@florilic.co
               </p>
             </div>
 
             {/* Links */}
-            <nav className="flex gap-8 text-sm text-[oklch(0.62_0.04_140)] font-sans">
+            <nav className="flex flex-wrap gap-4 md:gap-8 justify-center md:justify-start text-sm text-[oklch(0.62_0.04_140)] font-sans">
               {["Services", "How It Works", "Plants", "Contact"].map((item) => (
                 <button
                   type="button"
@@ -884,9 +884,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 pt-6 border-t border-[oklch(0.22_0.04_150)] flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[oklch(0.48_0.025_140)]">
-            <p>
-              © {new Date().getFullYear()} Vantage Root. All rights reserved.
-            </p>
+            <p>© {new Date().getFullYear()} Florilic. All rights reserved.</p>
             <a
               href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
               target="_blank"
