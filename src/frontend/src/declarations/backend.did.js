@@ -13,6 +13,11 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const Status = IDL.Variant({
+  'new' : IDL.Null,
+  'completed' : IDL.Null,
+  'inProgress' : IDL.Null,
+});
 export const SunlightExposure = IDL.Variant({
   'partialShade' : IDL.Null,
   'fullSun' : IDL.Null,
@@ -30,8 +35,14 @@ export const BalconySize = IDL.Variant({
   'medium' : IDL.Null,
 });
 export const Time = IDL.Int;
+export const Priority = IDL.Variant({
+  'low' : IDL.Null,
+  'high' : IDL.Null,
+  'medium' : IDL.Null,
+});
 export const ConsultationRequest = IDL.Record({
   'id' : IDL.Nat,
+  'status' : Status,
   'sunlightExposure' : SunlightExposure,
   'stylePreference' : StylePreference,
   'balconySize' : BalconySize,
@@ -39,6 +50,7 @@ export const ConsultationRequest = IDL.Record({
   'email' : IDL.Text,
   'message' : IDL.Text,
   'timestamp' : Time,
+  'priority' : Priority,
   'phone' : IDL.Opt(IDL.Text),
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
@@ -46,6 +58,7 @@ export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'getAllConsultationRequests' : IDL.Func(
       [],
       [IDL.Vec(ConsultationRequest)],
@@ -54,7 +67,6 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
-  'getConsultationRequestCountAdmin' : IDL.Func([], [IDL.Nat], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -75,6 +87,8 @@ export const idlService = IDL.Service({
       [IDL.Bool],
       [],
     ),
+  'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
+  'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
 });
 
 export const idlInitArgs = [];
@@ -84,6 +98,11 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const Status = IDL.Variant({
+    'new' : IDL.Null,
+    'completed' : IDL.Null,
+    'inProgress' : IDL.Null,
   });
   const SunlightExposure = IDL.Variant({
     'partialShade' : IDL.Null,
@@ -102,8 +121,14 @@ export const idlFactory = ({ IDL }) => {
     'medium' : IDL.Null,
   });
   const Time = IDL.Int;
+  const Priority = IDL.Variant({
+    'low' : IDL.Null,
+    'high' : IDL.Null,
+    'medium' : IDL.Null,
+  });
   const ConsultationRequest = IDL.Record({
     'id' : IDL.Nat,
+    'status' : Status,
     'sunlightExposure' : SunlightExposure,
     'stylePreference' : StylePreference,
     'balconySize' : BalconySize,
@@ -111,6 +136,7 @@ export const idlFactory = ({ IDL }) => {
     'email' : IDL.Text,
     'message' : IDL.Text,
     'timestamp' : Time,
+    'priority' : Priority,
     'phone' : IDL.Opt(IDL.Text),
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
@@ -118,6 +144,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getAllConsultationRequests' : IDL.Func(
         [],
         [IDL.Vec(ConsultationRequest)],
@@ -126,7 +153,6 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
-    'getConsultationRequestCountAdmin' : IDL.Func([], [IDL.Nat], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -147,6 +173,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
+    'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
   });
 };
 

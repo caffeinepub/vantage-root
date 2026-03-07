@@ -10,6 +10,7 @@ export type Option<T> = Some<T> | None;
 export type Time = bigint;
 export interface ConsultationRequest {
     id: bigint;
+    status: Status;
     sunlightExposure: SunlightExposure;
     stylePreference: StylePreference;
     balconySize: BalconySize;
@@ -17,6 +18,7 @@ export interface ConsultationRequest {
     email: string;
     message: string;
     timestamp: Time;
+    priority: Priority;
     phone?: string;
 }
 export interface UserProfile {
@@ -26,6 +28,16 @@ export enum BalconySize {
     large = "large",
     small = "small",
     medium = "medium"
+}
+export enum Priority {
+    low = "low",
+    high = "high",
+    medium = "medium"
+}
+export enum Status {
+    new_ = "new",
+    completed = "completed",
+    inProgress = "inProgress"
 }
 export enum StylePreference {
     tropical = "tropical",
@@ -45,13 +57,15 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteConsultationRequest(id: bigint): Promise<boolean>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConsultationRequestCount(): Promise<bigint>;
-    getConsultationRequestCountAdmin(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
+    updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
 }

@@ -15,6 +15,7 @@ export type BalconySize = { 'large' : null } |
   { 'medium' : null };
 export interface ConsultationRequest {
   'id' : bigint,
+  'status' : Status,
   'sunlightExposure' : SunlightExposure,
   'stylePreference' : StylePreference,
   'balconySize' : BalconySize,
@@ -22,8 +23,15 @@ export interface ConsultationRequest {
   'email' : string,
   'message' : string,
   'timestamp' : Time,
+  'priority' : Priority,
   'phone' : [] | [string],
 }
+export type Priority = { 'low' : null } |
+  { 'high' : null } |
+  { 'medium' : null };
+export type Status = { 'new' : null } |
+  { 'completed' : null } |
+  { 'inProgress' : null };
 export type StylePreference = { 'tropical' : null } |
   { 'minimalist' : null } |
   { 'natural' : null } |
@@ -39,11 +47,11 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteConsultationRequest' : ActorMethod<[bigint], boolean>,
   'getAllConsultationRequests' : ActorMethod<[], Array<ConsultationRequest>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getConsultationRequestCount' : ActorMethod<[], bigint>,
-  'getConsultationRequestCountAdmin' : ActorMethod<[], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
@@ -59,6 +67,8 @@ export interface _SERVICE {
     ],
     boolean
   >,
+  'updateRequestPriority' : ActorMethod<[bigint, Priority], boolean>,
+  'updateRequestStatus' : ActorMethod<[bigint, Status], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -4,11 +4,14 @@ import Time "mo:core/Time";
 import Order "mo:core/Order";
 import List "mo:core/List";
 import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Runtime "mo:core/Runtime";
 
 actor {
+  type Priority = { #low; #medium; #high };
+  type Status = { #new_; #inProgress; #completed };
+
   type ConsultationRequest = {
     id : Nat;
     name : Text;
@@ -19,6 +22,8 @@ actor {
     stylePreference : StylePreference;
     message : Text;
     timestamp : Time.Time;
+    priority : Priority;
+    status : Status;
   };
 
   module ConsultationRequest {
@@ -47,7 +52,7 @@ actor {
   // User profile functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access profiles");
+      Runtime.trap("Unauthorized: Only users can view profiles");
     };
     userProfiles.get(caller);
   };
@@ -66,7 +71,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Public functions (no password verification, handle on the frontend)
+  // Public consultation request functions without authorization checks
   public shared ({ caller }) func submitConsultationRequest(
     name : Text,
     email : Text,
@@ -86,17 +91,14 @@ actor {
       stylePreference;
       message;
       timestamp = Time.now();
+      priority = #medium;
+      status = #new_; // New requests default to "new_"
     };
     requests.add(currentId, request);
     currentId += 1;
     true;
   };
 
-  public query ({ caller }) func getConsultationRequestCount() : async Nat {
-    requests.size();
-  };
-
-  // Admin functions (No password verification, handle on the frontend)
   public query ({ caller }) func getAllConsultationRequests() : async [ConsultationRequest] {
     let allRequests = List.empty<ConsultationRequest>();
     for (request in requests.values()) {
@@ -105,7 +107,39 @@ actor {
     allRequests.reverse().toArray().sort();
   };
 
-  public query ({ caller }) func getConsultationRequestCountAdmin() : async Nat {
+  public query ({ caller }) func getConsultationRequestCount() : async Nat {
     requests.size();
+  };
+
+  public shared ({ caller }) func deleteConsultationRequest(id : Nat) : async Bool {
+    switch (requests.get(id)) {
+      case (null) { false };
+      case (?_request) {
+        requests.remove(id);
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
+    switch (requests.get(id)) {
+      case (null) { false };
+      case (?request) {
+        let updatedRequest = { request with priority };
+        requests.add(id, updatedRequest);
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateRequestStatus(id : Nat, status : Status) : async Bool {
+    switch (requests.get(id)) {
+      case (null) { false };
+      case (?request) {
+        let updatedRequest = { request with status };
+        requests.add(id, updatedRequest);
+        true;
+      };
+    };
   };
 };

@@ -92,6 +92,7 @@ export class ExternalBlob {
 export type Time = bigint;
 export interface ConsultationRequest {
     id: bigint;
+    status: Status;
     sunlightExposure: SunlightExposure;
     stylePreference: StylePreference;
     balconySize: BalconySize;
@@ -99,6 +100,7 @@ export interface ConsultationRequest {
     email: string;
     message: string;
     timestamp: Time;
+    priority: Priority;
     phone?: string;
 }
 export interface UserProfile {
@@ -108,6 +110,16 @@ export enum BalconySize {
     large = "large",
     small = "small",
     medium = "medium"
+}
+export enum Priority {
+    low = "low",
+    high = "high",
+    medium = "medium"
+}
+export enum Status {
+    new_ = "new",
+    completed = "completed",
+    inProgress = "inProgress"
 }
 export enum StylePreference {
     tropical = "tropical",
@@ -128,17 +140,19 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteConsultationRequest(id: bigint): Promise<boolean>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConsultationRequestCount(): Promise<bigint>;
-    getConsultationRequestCountAdmin(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
+    updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
 }
-import type { BalconySize as _BalconySize, ConsultationRequest as _ConsultationRequest, StylePreference as _StylePreference, SunlightExposure as _SunlightExposure, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { BalconySize as _BalconySize, ConsultationRequest as _ConsultationRequest, Priority as _Priority, Status as _Status, StylePreference as _StylePreference, SunlightExposure as _SunlightExposure, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -169,6 +183,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteConsultationRequest(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteConsultationRequest(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteConsultationRequest(arg0);
+            return result;
+        }
+    }
     async getAllConsultationRequests(): Promise<Array<ConsultationRequest>> {
         if (this.processError) {
             try {
@@ -187,28 +215,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n14(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n14(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
         }
     }
     async getConsultationRequestCount(): Promise<bigint> {
@@ -225,32 +253,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getConsultationRequestCountAdmin(): Promise<bigint> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getConsultationRequestCountAdmin();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getConsultationRequestCountAdmin();
-            return result;
-        }
-    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -284,41 +298,76 @@ export class Backend implements backendInterface {
     async submitConsultationRequest(arg0: string, arg1: string, arg2: string | null, arg3: BalconySize, arg4: SunlightExposure, arg5: StylePreference, arg6: string): Promise<boolean> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n16(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n17(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n19(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n21(this._uploadFile, this._downloadFile, arg5), arg6);
+                const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n20(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n21(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n23(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n25(this._uploadFile, this._downloadFile, arg5), arg6);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n16(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n17(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n19(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n21(this._uploadFile, this._downloadFile, arg5), arg6);
+            const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n20(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n21(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n23(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n25(this._uploadFile, this._downloadFile, arg5), arg6);
+            return result;
+        }
+    }
+    async updateRequestPriority(arg0: bigint, arg1: Priority): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n27(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n27(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async updateRequestStatus(arg0: bigint, arg1: Status): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n29(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n29(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
 }
-function from_candid_BalconySize_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BalconySize): BalconySize {
-    return from_candid_variant_n11(_uploadFile, _downloadFile, value);
+function from_candid_BalconySize_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BalconySize): BalconySize {
+    return from_candid_variant_n13(_uploadFile, _downloadFile, value);
 }
 function from_candid_ConsultationRequest_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ConsultationRequest): ConsultationRequest {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_StylePreference_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StylePreference): StylePreference {
-    return from_candid_variant_n9(_uploadFile, _downloadFile, value);
-}
-function from_candid_SunlightExposure_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SunlightExposure): SunlightExposure {
-    return from_candid_variant_n7(_uploadFile, _downloadFile, value);
-}
-function from_candid_UserRole_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+function from_candid_Priority_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Priority): Priority {
     return from_candid_variant_n15(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_Status_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Status): Status {
+    return from_candid_variant_n7(_uploadFile, _downloadFile, value);
+}
+function from_candid_StylePreference_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StylePreference): StylePreference {
+    return from_candid_variant_n11(_uploadFile, _downloadFile, value);
+}
+function from_candid_SunlightExposure_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SunlightExposure): SunlightExposure {
+    return from_candid_variant_n9(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n19(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
+    status: _Status;
     sunlightExposure: _SunlightExposure;
     stylePreference: _StylePreference;
     balconySize: _BalconySize;
@@ -326,9 +375,11 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
     email: string;
     message: string;
     timestamp: _Time;
+    priority: _Priority;
     phone: [] | [string];
 }): {
     id: bigint;
+    status: Status;
     sunlightExposure: SunlightExposure;
     stylePreference: StylePreference;
     balconySize: BalconySize;
@@ -336,48 +387,24 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
     email: string;
     message: string;
     timestamp: Time;
+    priority: Priority;
     phone?: string;
 } {
     return {
         id: value.id,
-        sunlightExposure: from_candid_SunlightExposure_n6(_uploadFile, _downloadFile, value.sunlightExposure),
-        stylePreference: from_candid_StylePreference_n8(_uploadFile, _downloadFile, value.stylePreference),
-        balconySize: from_candid_BalconySize_n10(_uploadFile, _downloadFile, value.balconySize),
+        status: from_candid_Status_n6(_uploadFile, _downloadFile, value.status),
+        sunlightExposure: from_candid_SunlightExposure_n8(_uploadFile, _downloadFile, value.sunlightExposure),
+        stylePreference: from_candid_StylePreference_n10(_uploadFile, _downloadFile, value.stylePreference),
+        balconySize: from_candid_BalconySize_n12(_uploadFile, _downloadFile, value.balconySize),
         name: value.name,
         email: value.email,
         message: value.message,
         timestamp: value.timestamp,
-        phone: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.phone))
+        priority: from_candid_Priority_n14(_uploadFile, _downloadFile, value.priority),
+        phone: record_opt_to_undefined(from_candid_opt_n16(_uploadFile, _downloadFile, value.phone))
     };
 }
 function from_candid_variant_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    large: null;
-} | {
-    small: null;
-} | {
-    medium: null;
-}): BalconySize {
-    return "large" in value ? BalconySize.large : "small" in value ? BalconySize.small : "medium" in value ? BalconySize.medium : value;
-}
-function from_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    admin: null;
-} | {
-    user: null;
-} | {
-    guest: null;
-}): UserRole {
-    return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
-}
-function from_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    partialShade: null;
-} | {
-    fullSun: null;
-} | {
-    fullShade: null;
-}): SunlightExposure {
-    return "partialShade" in value ? SunlightExposure.partialShade : "fullSun" in value ? SunlightExposure.fullSun : "fullShade" in value ? SunlightExposure.fullShade : value;
-}
-function from_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     tropical: null;
 } | {
     minimalist: null;
@@ -388,38 +415,74 @@ function from_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uin
 }): StylePreference {
     return "tropical" in value ? StylePreference.tropical : "minimalist" in value ? StylePreference.minimalist : "natural" in value ? StylePreference.natural : "modern" in value ? StylePreference.modern : value;
 }
-function from_candid_vec_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ConsultationRequest>): Array<ConsultationRequest> {
-    return value.map((x)=>from_candid_ConsultationRequest_n4(_uploadFile, _downloadFile, x));
-}
-function to_candid_BalconySize_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): _BalconySize {
-    return to_candid_variant_n18(_uploadFile, _downloadFile, value);
-}
-function to_candid_StylePreference_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): _StylePreference {
-    return to_candid_variant_n22(_uploadFile, _downloadFile, value);
-}
-function to_candid_SunlightExposure_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): _SunlightExposure {
-    return to_candid_variant_n20(_uploadFile, _downloadFile, value);
-}
-function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
-    return to_candid_variant_n2(_uploadFile, _downloadFile, value);
-}
-function to_candid_opt_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
-    return value === null ? candid_none() : candid_some(value);
-}
-function to_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): {
+function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     large: null;
 } | {
     small: null;
 } | {
     medium: null;
-} {
-    return value == BalconySize.large ? {
-        large: null
-    } : value == BalconySize.small ? {
-        small: null
-    } : value == BalconySize.medium ? {
-        medium: null
-    } : value;
+}): BalconySize {
+    return "large" in value ? BalconySize.large : "small" in value ? BalconySize.small : "medium" in value ? BalconySize.medium : value;
+}
+function from_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    low: null;
+} | {
+    high: null;
+} | {
+    medium: null;
+}): Priority {
+    return "low" in value ? Priority.low : "high" in value ? Priority.high : "medium" in value ? Priority.medium : value;
+}
+function from_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    admin: null;
+} | {
+    user: null;
+} | {
+    guest: null;
+}): UserRole {
+    return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
+}
+function from_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    new: null;
+} | {
+    completed: null;
+} | {
+    inProgress: null;
+}): Status {
+    return "new" in value ? Status.new : "completed" in value ? Status.completed : "inProgress" in value ? Status.inProgress : value;
+}
+function from_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    partialShade: null;
+} | {
+    fullSun: null;
+} | {
+    fullShade: null;
+}): SunlightExposure {
+    return "partialShade" in value ? SunlightExposure.partialShade : "fullSun" in value ? SunlightExposure.fullSun : "fullShade" in value ? SunlightExposure.fullShade : value;
+}
+function from_candid_vec_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ConsultationRequest>): Array<ConsultationRequest> {
+    return value.map((x)=>from_candid_ConsultationRequest_n4(_uploadFile, _downloadFile, x));
+}
+function to_candid_BalconySize_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): _BalconySize {
+    return to_candid_variant_n22(_uploadFile, _downloadFile, value);
+}
+function to_candid_Priority_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): _Priority {
+    return to_candid_variant_n28(_uploadFile, _downloadFile, value);
+}
+function to_candid_Status_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): _Status {
+    return to_candid_variant_n30(_uploadFile, _downloadFile, value);
+}
+function to_candid_StylePreference_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): _StylePreference {
+    return to_candid_variant_n26(_uploadFile, _downloadFile, value);
+}
+function to_candid_SunlightExposure_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): _SunlightExposure {
+    return to_candid_variant_n24(_uploadFile, _downloadFile, value);
+}
+function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+    return to_candid_variant_n2(_uploadFile, _downloadFile, value);
+}
+function to_candid_opt_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+    return value === null ? candid_none() : candid_some(value);
 }
 function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;
@@ -436,7 +499,22 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): {
+function to_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): {
+    large: null;
+} | {
+    small: null;
+} | {
+    medium: null;
+} {
+    return value == BalconySize.large ? {
+        large: null
+    } : value == BalconySize.small ? {
+        small: null
+    } : value == BalconySize.medium ? {
+        medium: null
+    } : value;
+}
+function to_candid_variant_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): {
     partialShade: null;
 } | {
     fullSun: null;
@@ -451,7 +529,7 @@ function to_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint
         fullShade: null
     } : value;
 }
-function to_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): {
+function to_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): {
     tropical: null;
 } | {
     minimalist: null;
@@ -468,6 +546,36 @@ function to_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint
         natural: null
     } : value == StylePreference.modern ? {
         modern: null
+    } : value;
+}
+function to_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): {
+    low: null;
+} | {
+    high: null;
+} | {
+    medium: null;
+} {
+    return value == Priority.low ? {
+        low: null
+    } : value == Priority.high ? {
+        high: null
+    } : value == Priority.medium ? {
+        medium: null
+    } : value;
+}
+function to_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): {
+    new: null;
+} | {
+    completed: null;
+} | {
+    inProgress: null;
+} {
+    return value == Status.new ? {
+        new_: null
+    } : value == Status.completed ? {
+        completed: null
+    } : value == Status.inProgress ? {
+        inProgress: null
     } : value;
 }
 export interface CreateActorOptions {

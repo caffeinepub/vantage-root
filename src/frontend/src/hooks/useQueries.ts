@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   BalconySize,
+  Priority,
   StylePreference,
   SunlightExposure,
 } from "../backend.d";
+import type { Status } from "../backend.d";
 import { useActor } from "./useActor";
 
 export function useIsCallerAdmin() {
@@ -72,6 +74,55 @@ export function useSubmitConsultationRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consultationRequests"] });
       queryClient.invalidateQueries({ queryKey: ["consultationRequestCount"] });
+    },
+  });
+}
+
+export function useDeleteConsultationRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.deleteConsultationRequest(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultationRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["consultationRequestCount"] });
+    },
+  });
+}
+
+export function useUpdateRequestPriority() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      priority,
+    }: { id: bigint; priority: Priority }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.updateRequestPriority(id, priority);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultationRequests"] });
+    },
+  });
+}
+
+export function useUpdateRequestStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: bigint; status: Status }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.updateRequestStatus(id, status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultationRequests"] });
     },
   });
 }
