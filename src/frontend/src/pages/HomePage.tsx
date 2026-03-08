@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowDown,
@@ -6,17 +7,20 @@ import {
   CheckCircle2,
   Flower2,
   Leaf,
+  Loader2,
   Palette,
   Sprout,
   Users,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { useActor } from "../hooks/useActor";
 
 import balconyTransform from "../../public/assets/generated/balcony-transform.dim_800x600.jpg";
-import florilicLogo from "../../public/assets/generated/florilic-logo-white-transparent.dim_800x200.png";
 import heroBg from "../../public/assets/generated/hero-balcony.dim_1600x900.jpg";
 import plantersCollection from "../../public/assets/generated/planters-collection.dim_800x600.jpg";
+import plantlyLogo from "../../public/assets/generated/plantly-logo-transparent.dim_800x200.png";
 import plantsShowcase from "../../public/assets/generated/plants-showcase.dim_800x600.jpg";
 
 /* ─── Animation variants ─────────────────────────────────── */
@@ -135,10 +139,35 @@ const customers = [
 
 export default function HomePage() {
   const servicesRef = useRef<HTMLElement>(null);
+  const { actor } = useActor();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
 
   const scrollToServices = () => {
     servicesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  async function handleNewsletterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!actor || !newsletterEmail) return;
+    setNewsletterLoading(true);
+    try {
+      const ok = await actor.subscribeNewsletter(
+        newsletterEmail.trim().toLowerCase(),
+      );
+      if (ok) {
+        toast.success("You're subscribed!");
+        setNewsletterEmail("");
+      } else {
+        toast.info("Already subscribed.");
+        setNewsletterEmail("");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setNewsletterLoading(false);
+    }
+  }
 
   return (
     <div className="bg-background">
@@ -374,7 +403,7 @@ export default function HomePage() {
               <div className="absolute -top-6 -left-6 w-32 h-32 rounded-full bg-[oklch(0.62_0.12_45/0.12)] blur-2xl" />
               <div className="relative bg-gradient-to-br from-[oklch(0.28_0.07_150)] to-[oklch(0.22_0.06_150)] border border-[oklch(0.35_0.06_150)] rounded-sm p-6 md:p-10">
                 <span className="block text-[oklch(0.62_0.12_45)] text-sm font-semibold tracking-[0.2em] uppercase mb-4">
-                  The Florilic Solution
+                  The Plantly Solution
                 </span>
                 <p className="font-display text-3xl font-light text-white leading-tight mb-6">
                   One call. One design.
@@ -853,24 +882,27 @@ export default function HomePage() {
       {/* ── Footer ────────────────────────────────────────────── */}
       <footer className="bg-[oklch(0.14_0.04_150)] border-t border-[oklch(0.25_0.05_150)] py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
+          <div className="grid md:grid-cols-3 gap-10 md:gap-8">
             {/* Brand */}
             <div className="text-center md:text-left">
               <img
-                src={florilicLogo}
-                alt="Florilic"
+                src={plantlyLogo}
+                alt="Plantly"
                 className="h-10 w-auto mb-3 mx-auto md:mx-0"
               />
               <p className="font-display text-lg italic text-[oklch(0.62_0.12_45)] mb-1">
                 Balconies. Designed. Grown.
               </p>
               <p className="text-sm text-[oklch(0.55_0.03_140)]">
-                hello@florilic.co
+                hello@plantly.co
               </p>
             </div>
 
             {/* Links */}
-            <nav className="flex flex-wrap gap-4 md:gap-8 justify-center md:justify-start text-sm text-[oklch(0.62_0.04_140)] font-sans">
+            <nav className="flex flex-col gap-3 items-center md:items-start text-sm text-[oklch(0.62_0.04_140)] font-sans">
+              <p className="text-[oklch(0.45_0.025_140)] text-xs font-semibold uppercase tracking-widest mb-1">
+                Explore
+              </p>
               {["Services", "How It Works", "Plants", "Contact"].map((item) => (
                 <button
                   type="button"
@@ -886,19 +918,65 @@ export default function HomePage() {
                   {item}
                 </button>
               ))}
+              <Link
+                to="/signup"
+                data-ocid="footer.signup_link"
+                className="hover:text-[oklch(0.62_0.12_45)] transition-colors"
+              >
+                Create Account
+              </Link>
+              <Link
+                to="/login"
+                data-ocid="footer.login_link"
+                className="hover:text-[oklch(0.62_0.12_45)] transition-colors"
+              >
+                Sign In
+              </Link>
             </nav>
+
+            {/* Newsletter */}
+            <div className="text-center md:text-left">
+              <p className="text-[oklch(0.45_0.025_140)] text-xs font-semibold uppercase tracking-widest mb-1 font-sans">
+                Newsletter
+              </p>
+              <p className="font-display text-xl font-light text-white mb-2">
+                Stay in the loop
+              </p>
+              <p className="text-sm text-[oklch(0.55_0.03_140)] font-sans mb-4 leading-relaxed">
+                Plant care guides, seasonal tips, and Plantly updates — straight
+                to your inbox.
+              </p>
+              <form
+                onSubmit={handleNewsletterSubmit}
+                className="flex flex-col sm:flex-row gap-2"
+              >
+                <Input
+                  type="email"
+                  data-ocid="newsletter.input"
+                  placeholder="your@email.com"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  required
+                  className="flex-1 bg-[oklch(0.20_0.055_150)] border-[oklch(0.32_0.05_150)] text-white placeholder:text-[oklch(0.42_0.03_140)] focus:border-[oklch(0.62_0.12_45)] rounded-sm font-sans text-sm h-9 text-left"
+                />
+                <Button
+                  type="submit"
+                  data-ocid="newsletter.submit_button"
+                  disabled={newsletterLoading}
+                  className="bg-[oklch(0.62_0.12_45)] hover:bg-[oklch(0.55_0.12_45)] text-white font-semibold rounded-sm h-9 px-4 text-sm shrink-0"
+                >
+                  {newsletterLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Subscribe"
+                  )}
+                </Button>
+              </form>
+            </div>
           </div>
 
           <div className="mt-10 pt-6 border-t border-[oklch(0.22_0.04_150)] flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[oklch(0.48_0.025_140)]">
-            <p>© {new Date().getFullYear()} Florilic. All rights reserved.</p>
-            <a
-              href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[oklch(0.62_0.12_45)] transition-colors"
-            >
-              Built with ♥ using caffeine.ai
-            </a>
+            <p>© {new Date().getFullYear()} Plantly. All rights reserved.</p>
           </div>
         </div>
       </footer>

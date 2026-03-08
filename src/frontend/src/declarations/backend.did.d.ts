@@ -26,6 +26,23 @@ export interface ConsultationRequest {
   'priority' : Priority,
   'phone' : [] | [string],
 }
+export interface CustomerUser {
+  'id' : bigint,
+  'country' : string,
+  'city' : string,
+  'createdAt' : Time,
+  'fullName' : string,
+  'email' : string,
+  'state' : string,
+  'addressLine' : string,
+  'passwordHash' : string,
+  'phone' : string,
+  'pincode' : string,
+}
+export interface NewsletterSubscription {
+  'subscribedAt' : Time,
+  'email' : string,
+}
 export type Priority = { 'low' : null } |
   { 'high' : null } |
   { 'medium' : null };
@@ -55,6 +72,11 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'blockSession' : ActorMethod<[string], boolean>,
+  'changeCustomerPassword' : ActorMethod<
+    [string, string, string],
+    { 'ok' : null } |
+      { 'err' : string }
+  >,
   'deleteConsultationRequest' : ActorMethod<[bigint], boolean>,
   'getAllAdminSessions' : ActorMethod<[], Array<SessionInfo>>,
   'getAllConsultationRequests' : ActorMethod<[], Array<ConsultationRequest>>,
@@ -62,15 +84,28 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getConsultationRequestCount' : ActorMethod<[], bigint>,
+  'getCustomerProfile' : ActorMethod<[string], [] | [CustomerUser]>,
+  'getNewsletterSubscribers' : ActorMethod<[], Array<NewsletterSubscription>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isSessionBlocked' : ActorMethod<[string], boolean>,
+  'loginCustomer' : ActorMethod<
+    [string, string],
+    { 'ok' : string } |
+      { 'err' : string }
+  >,
+  'logoutCustomer' : ActorMethod<[string], boolean>,
   'registerAdminSession' : ActorMethod<
     [string, string, string, string],
     boolean
   >,
   'removeAdminSession' : ActorMethod<[string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'signupCustomer' : ActorMethod<
+    [string, string, string, string, string, string, string, string, string],
+    { 'ok' : bigint } |
+      { 'err' : string }
+  >,
   'submitConsultationRequest' : ActorMethod<
     [
       string,
@@ -83,7 +118,13 @@ export interface _SERVICE {
     ],
     boolean
   >,
+  'subscribeNewsletter' : ActorMethod<[string], boolean>,
   'unblockSession' : ActorMethod<[string], boolean>,
+  'unsubscribeNewsletter' : ActorMethod<[string], boolean>,
+  'updateCustomerProfile' : ActorMethod<
+    [string, string, string, string, string, string, string, string],
+    boolean
+  >,
   'updateRequestPriority' : ActorMethod<[bigint, Priority], boolean>,
   'updateRequestStatus' : ActorMethod<[bigint, Status], boolean>,
 }

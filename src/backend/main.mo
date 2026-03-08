@@ -9,7 +9,9 @@ import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   type Priority = { #low; #medium; #high };
   type Status = { #new_; #inProgress; #completed };
@@ -50,9 +52,42 @@ actor {
     ipHint : Text;
   };
 
+  // New types for customer user, sessions, and newsletter
+  public type CustomerUser = {
+    id : Nat;
+    fullName : Text;
+    email : Text;
+    passwordHash : Text;
+    phone : Text;
+    addressLine : Text;
+    city : Text;
+    state : Text;
+    country : Text;
+    pincode : Text;
+    createdAt : Time.Time;
+  };
+
+  public type CustomerSession = {
+    token : Text;
+    customerId : Nat;
+    email : Text;
+    createdAt : Time.Time;
+  };
+
+  public type NewsletterSubscription = {
+    email : Text;
+    subscribedAt : Time.Time;
+  };
+
   // Data stores
   let requests = Map.empty<Nat, ConsultationRequest>();
   var currentId = 0;
+
+  let customers = Map.empty<Nat, CustomerUser>();
+  var currentCustomerId = 0;
+
+  let customerSessions = Map.empty<Text, CustomerSession>();
+  let newsletterSubs = Map.empty<Text, NewsletterSubscription>();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -60,6 +95,188 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   let sessions = Map.empty<Text, SessionInfo>();
   let blocklist = Map.empty<Text, ()>();
+
+  // Helper functions for password and token handling
+  func hashPassword(password : Text) : Text {
+    "plantly_v1:" # password;
+  };
+
+  func generateToken(email : Text, timestamp : Time.Time) : Text {
+    "tok_" # email # "_" # debug_show (timestamp);
+  };
+
+  // Customer account functions
+  public shared ({ caller }) func signupCustomer(
+    fullName : Text,
+    email : Text,
+    password : Text,
+    phone : Text,
+    addressLine : Text,
+    city : Text,
+    state : Text,
+    country : Text,
+    pincode : Text,
+  ) : async {
+    #ok : Nat;
+    #err : Text;
+  } {
+    let existing = customers.values().find(func(c) { c.email == email });
+    switch (existing) {
+      case (?_) { #err("Email already exists") };
+      case (null) {
+        let customer : CustomerUser = {
+          id = currentCustomerId;
+          fullName;
+          email;
+          passwordHash = hashPassword(password);
+          phone;
+          addressLine;
+          city;
+          state;
+          country;
+          pincode;
+          createdAt = Time.now();
+        };
+        customers.add(currentCustomerId, customer);
+        currentCustomerId += 1;
+        #ok(customer.id);
+      };
+    };
+  };
+
+  public shared ({ caller }) func loginCustomer(email : Text, password : Text) : async {
+    #ok : Text;
+    #err : Text;
+  } {
+    let userOpt = customers.values().find(func(c) { c.email == email });
+    switch (userOpt) {
+      case (null) { #err("User not found") };
+      case (?user) {
+        if (user.passwordHash != hashPassword(password)) {
+          return #err("Incorrect password");
+        };
+        let token = generateToken(email, Time.now());
+        let session : CustomerSession = {
+          token;
+          customerId = user.id;
+          email;
+          createdAt = Time.now();
+        };
+        customerSessions.add(token, session);
+        #ok(token);
+      };
+    };
+  };
+
+  public shared ({ caller }) func logoutCustomer(token : Text) : async Bool {
+    switch (customerSessions.get(token)) {
+      case (null) { false };
+      case (?_session) {
+        customerSessions.remove(token);
+        true;
+      };
+    };
+  };
+
+  public query ({ caller }) func getCustomerProfile(token : Text) : async ?CustomerUser {
+    switch (customerSessions.get(token)) {
+      case (null) { null };
+      case (?session) {
+        customers.get(session.customerId);
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateCustomerProfile(
+    token : Text,
+    fullName : Text,
+    phone : Text,
+    addressLine : Text,
+    city : Text,
+    state : Text,
+    country : Text,
+    pincode : Text,
+  ) : async Bool {
+    switch (customerSessions.get(token)) {
+      case (null) { false };
+      case (?session) {
+        switch (customers.get(session.customerId)) {
+          case (null) { false };
+          case (?customer) {
+            let updated = {
+              customer with
+              fullName;
+              phone;
+              addressLine;
+              city;
+              state;
+              country;
+              pincode;
+            };
+            customers.add(customer.id, updated);
+            true;
+          };
+        };
+      };
+    };
+  };
+
+  public shared ({ caller }) func changeCustomerPassword(
+    token : Text,
+    oldPassword : Text,
+    newPassword : Text,
+  ) : async {
+    #ok;
+    #err : Text;
+  } {
+    switch (customerSessions.get(token)) {
+      case (null) { #err("Invalid session") };
+      case (?session) {
+        switch (customers.get(session.customerId)) {
+          case (null) { #err("Customer not found") };
+          case (?customer) {
+            if (customer.passwordHash != hashPassword(oldPassword)) {
+              return #err("Incorrect old password");
+            };
+            let updated = { customer with passwordHash = hashPassword(newPassword) };
+            customers.add(customer.id, updated);
+            #ok;
+          };
+        };
+      };
+    };
+  };
+
+  public shared ({ caller }) func subscribeNewsletter(email : Text) : async Bool {
+    switch (newsletterSubs.get(email)) {
+      case (?_) { false };
+      case (null) {
+        let sub : NewsletterSubscription = {
+          email;
+          subscribedAt = Time.now();
+        };
+        newsletterSubs.add(email, sub);
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func unsubscribeNewsletter(email : Text) : async Bool {
+    switch (newsletterSubs.get(email)) {
+      case (null) { false };
+      case (?_) {
+        newsletterSubs.remove(email);
+        true;
+      };
+    };
+  };
+
+  public query ({ caller }) func getNewsletterSubscribers() : async [NewsletterSubscription] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view newsletter subscribers");
+    };
+    newsletterSubs.values().toArray();
+  };
 
   // User profile functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -112,7 +329,10 @@ actor {
     true;
   };
 
-  public query func getAllConsultationRequests() : async [ConsultationRequest] {
+  public query ({ caller }) func getAllConsultationRequests() : async [ConsultationRequest] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all consultation requests");
+    };
     let allRequests = List.empty<ConsultationRequest>();
     for (request in requests.values()) {
       allRequests.add(request);
@@ -120,11 +340,17 @@ actor {
     allRequests.reverse().toArray().sort();
   };
 
-  public query func getConsultationRequestCount() : async Nat {
+  public query ({ caller }) func getConsultationRequestCount() : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view consultation request count");
+    };
     requests.size();
   };
 
-  public shared func deleteConsultationRequest(id : Nat) : async Bool {
+  public shared ({ caller }) func deleteConsultationRequest(id : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can delete consultation requests");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?_request) {
@@ -134,7 +360,10 @@ actor {
     };
   };
 
-  public shared func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
+  public shared ({ caller }) func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update request priority");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -145,7 +374,10 @@ actor {
     };
   };
 
-  public shared func updateRequestStatus(id : Nat, status : Status) : async Bool {
+  public shared ({ caller }) func updateRequestStatus(id : Nat, status : Status) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update request status");
+    };
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -157,7 +389,10 @@ actor {
   };
 
   // Session management functions - all admin-only
-  public shared func registerAdminSession(token : Text, deviceInfo : Text, timezone : Text, ipHint : Text) : async Bool {
+  public shared ({ caller }) func registerAdminSession(token : Text, deviceInfo : Text, timezone : Text, ipHint : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can register admin sessions");
+    };
     if (blocklist.containsKey(token)) { return false };
 
     let sessionInfo : SessionInfo = {
@@ -172,11 +407,17 @@ actor {
     true;
   };
 
-  public query func getAllAdminSessions() : async [SessionInfo] {
+  public query ({ caller }) func getAllAdminSessions() : async [SessionInfo] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view admin sessions");
+    };
     sessions.values().toArray();
   };
 
-  public shared func removeAdminSession(token : Text) : async Bool {
+  public shared ({ caller }) func removeAdminSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can remove admin sessions");
+    };
     switch (sessions.get(token)) {
       case (null) { false };
       case (?_session) {
@@ -186,13 +427,19 @@ actor {
     };
   };
 
-  public shared func blockSession(token : Text) : async Bool {
+  public shared ({ caller }) func blockSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can block sessions");
+    };
     blocklist.add(token, ());
     sessions.remove(token);
     true;
   };
 
-  public shared func unblockSession(token : Text) : async Bool {
+  public shared ({ caller }) func unblockSession(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can unblock sessions");
+    };
     switch (blocklist.get(token)) {
       case (null) { false };
       case (?_block) {
@@ -202,11 +449,17 @@ actor {
     };
   };
 
-  public query func isSessionBlocked(token : Text) : async Bool {
+  public query ({ caller }) func isSessionBlocked(token : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can check session block status");
+    };
     blocklist.containsKey(token);
   };
 
-  public query func getBlockedSessions() : async [Text] {
+  public query ({ caller }) func getBlockedSessions() : async [Text] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view blocked sessions");
+    };
     blocklist.keys().toArray();
   };
 };

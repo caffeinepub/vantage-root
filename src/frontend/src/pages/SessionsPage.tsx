@@ -26,8 +26,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { SessionInfo } from "../backend.d";
 import { useActor } from "../hooks/useActor";
 
-const ADMIN_PASSWORD = "florilic2024";
-const SESSION_KEY = "florilic_admin_session";
+const ADMIN_PASSWORD = "plantly2024";
+const SESSION_KEY = "plantly_admin_session";
 
 // ── UA parser ─────────────────────────────────────────────────────────────────
 function parseUserAgent(ua: string): string {

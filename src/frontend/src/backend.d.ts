@@ -15,6 +15,23 @@ export interface SessionInfo {
     deviceInfo: string;
 }
 export type Time = bigint;
+export interface NewsletterSubscription {
+    subscribedAt: Time;
+    email: string;
+}
+export interface CustomerUser {
+    id: bigint;
+    country: string;
+    city: string;
+    createdAt: Time;
+    fullName: string;
+    email: string;
+    state: string;
+    addressLine: string;
+    passwordHash: string;
+    phone: string;
+    pincode: string;
+}
 export interface ConsultationRequest {
     id: bigint;
     status: Status;
@@ -65,6 +82,13 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     blockSession(token: string): Promise<boolean>;
+    changeCustomerPassword(token: string, oldPassword: string, newPassword: string): Promise<{
+        __kind__: "ok";
+        ok: null;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     deleteConsultationRequest(id: bigint): Promise<boolean>;
     getAllAdminSessions(): Promise<Array<SessionInfo>>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
@@ -72,14 +96,34 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConsultationRequestCount(): Promise<bigint>;
+    getCustomerProfile(token: string): Promise<CustomerUser | null>;
+    getNewsletterSubscribers(): Promise<Array<NewsletterSubscription>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     isSessionBlocked(token: string): Promise<boolean>;
+    loginCustomer(email: string, password: string): Promise<{
+        __kind__: "ok";
+        ok: string;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
+    logoutCustomer(token: string): Promise<boolean>;
     registerAdminSession(token: string, deviceInfo: string, timezone: string, ipHint: string): Promise<boolean>;
     removeAdminSession(token: string): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    signupCustomer(fullName: string, email: string, password: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string): Promise<{
+        __kind__: "ok";
+        ok: bigint;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    subscribeNewsletter(email: string): Promise<boolean>;
     unblockSession(token: string): Promise<boolean>;
+    unsubscribeNewsletter(email: string): Promise<boolean>;
+    updateCustomerProfile(token: string, fullName: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string): Promise<boolean>;
     updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
     updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
 }

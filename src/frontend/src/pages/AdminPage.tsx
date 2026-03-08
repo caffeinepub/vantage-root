@@ -57,8 +57,8 @@ import {
 
 // Hardcoded admin credentials
 const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "florilic2024";
-const SESSION_KEY = "florilic_admin_session";
+const ADMIN_PASSWORD = "plantly2024";
+const SESSION_KEY = "plantly_admin_session";
 
 function formatDate(timestamp: bigint) {
   const ms = Number(timestamp) / 1_000_000;

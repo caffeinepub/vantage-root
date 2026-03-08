@@ -1,60 +1,41 @@
-# Florilic
+# Plantly
 
 ## Current State
-- Marketing site with a dark forest-green theme, hero section, services, consultation booking form, and admin panel.
-- Admin panel at `/admin` uses hardcoded username/password (`admin` / `florilic2024`), stored in frontend only.
-- Admin dashboard shows consultation requests with sort, priority, status, and delete features.
-- No session or device tracking of any kind.
+- Marketing site with hero, services, plants/planters showcase, and balcony transformation sections
+- Consultation booking form (name, email, phone, balcony size, sunlight, style, message)
+- Admin panel at `/admin` with username/password login (`admin` / `plantly2024`)
+- Admin features: view/delete consultation requests, set priority, set status (New/In Progress/Completed), sort
+- Session management at `/admin/sessions` — view active sessions, block/unblock devices
+- Backend stores ConsultationRequests and admin sessions in Motoko
+- Authorization component is installed
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Device Session Management page** at `/admin/sessions`:
-  - Accessible only when logged in as admin.
-  - Shows a list of all active admin sessions, each with:
-    - Device/browser name (user-agent parsed: e.g. "Chrome on Windows", "Safari on iPhone")
-    - Approximate location (city/country derived from IP using a public IP-geolocation API via HTTP outcall is not available — use browser-provided info or store timezone on login as a proxy)
-    - Login timestamp
-    - Session ID (unique token generated at login, stored in localStorage)
-    - "Current device" badge if it matches the active session
-  - Password confirmation flow: entering the admin password twice unlocks destructive actions (log out device, add to blocklist).
-  - Per-device actions: **Log Out** (removes session), **Block** (adds to blocklist, forces logout).
-  - Multi-select: select multiple devices to log out or block in bulk.
-  - Blocklist management section: shows blocked session tokens, with **Unblock** per entry.
-- **"Manage Sessions" button** in the admin panel header (when logged in), linking to `/admin/sessions`.
-- Backend stores sessions in-memory: a `sessions` map of `sessionToken -> SessionInfo`, and a `blocklist` set of tokens.
-- On admin login, frontend generates a UUID session token, saves it to localStorage, and registers it with the backend.
-- On admin page load, frontend checks if its session token is in the blocklist — if so, force-logs out.
-- Backend exposes:
-  - `registerAdminSession(token, deviceInfo, loginTime)` — stores session
-  - `getAllAdminSessions()` — returns all sessions array
-  - `removeAdminSession(token)` — removes a session (logout)
-  - `blockSession(token)` — moves to blocklist, removes from active sessions
-  - `unblockSession(token)` — removes from blocklist
-  - `isSessionBlocked(token)` — returns Bool
-  - `getBlockedSessions()` — returns list of blocked tokens
+- **Customer signup page** (`/signup`): form with Full Name, Email, Password, Phone Number, Delivery Address (required), plus optional City, State, Country, Pincode fields
+- **Customer login page** (`/login`): form with Email + Password
+- **User dashboard page** (`/dashboard`): shows saved address, wishlist (empty placeholder), order history (empty placeholder), newsletter subscriptions (empty placeholder), account settings (change name/address/password)
+- **Backend: CustomerUser type** — stores full name, email, hashed password (salted), phone, full address fields
+- **Backend: customer auth functions** — `signupCustomer`, `loginCustomer` (returns session token), `logoutCustomer`, `getCustomerProfile`, `updateCustomerProfile`
+- **Navbar links**: add "Login" and "Sign Up" buttons; when logged in show user's name + "Dashboard" + "Logout"
+- **Newsletter subscription field** on homepage and footer (email input + subscribe button, stores email in backend)
+- **Backend: newsletter subscriptions** — `subscribeNewsletter(email)`, `getNewsletterSubscribers()` (admin only)
 
 ### Modify
-- `AdminPage.tsx`: Add "Manage Sessions" button in header (visible when logged in), linking to `/admin/sessions`.
-- `routeTree.ts`: Add `/admin/sessions` route pointing to new `SessionsPage` component.
-- `main.mo`: Add session management data structures and functions.
-- On admin login: generate session token, call `registerAdminSession`.
-- On admin page load (when token exists in localStorage): call `isSessionBlocked` and force-logout if true.
+- Navbar to include auth state (login/signup links vs logged-in user menu)
+- Footer to include newsletter subscription widget
 
 ### Remove
-- Nothing removed.
+- Nothing removed
 
 ## Implementation Plan
-1. Update `main.mo` to add `SessionInfo` type, `sessions` map, `blocklist` set, and all 7 session management functions.
-2. Regenerate `backend.d.ts` to expose new APIs.
-3. Create `src/frontend/src/pages/SessionsPage.tsx` — full device management UI with:
-   - Session list (device name, timezone/location proxy, login time, current badge)
-   - Password confirmation dialog (enter password twice to unlock destructive actions)
-   - Per-row log out and block buttons
-   - Multi-select + bulk actions
-   - Blocklist panel with unblock
-4. Update `AdminPage.tsx`:
-   - On login: generate UUID, save to localStorage, call `registerAdminSession` with user-agent + timezone.
-   - On load: check localStorage token, call `isSessionBlocked`, auto-logout if blocked.
-   - Add "Manage Sessions" button in header.
-5. Update `routeTree.ts` to register `/admin/sessions`.
+1. Add `CustomerUser`, `CustomerSession`, `NewsletterSubscription` types to backend
+2. Add `signupCustomer`, `loginCustomer`, `logoutCustomer`, `getCustomerProfile`, `updateCustomerProfile` functions
+3. Add `subscribeNewsletter`, `getNewsletterSubscribers` functions
+4. Regenerate `backend.d.ts`
+5. Create `/signup` page with full registration form
+6. Create `/login` page with email/password form
+7. Create `/dashboard` page with profile, address, wishlist placeholder, order history placeholder
+8. Update navbar with auth-aware links
+9. Add newsletter subscription widget to homepage and footer
+10. Add routes for `/signup`, `/login`, `/dashboard`

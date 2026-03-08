@@ -61,11 +61,33 @@ export const ConsultationRequest = IDL.Record({
   'phone' : IDL.Opt(IDL.Text),
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const CustomerUser = IDL.Record({
+  'id' : IDL.Nat,
+  'country' : IDL.Text,
+  'city' : IDL.Text,
+  'createdAt' : Time,
+  'fullName' : IDL.Text,
+  'email' : IDL.Text,
+  'state' : IDL.Text,
+  'addressLine' : IDL.Text,
+  'passwordHash' : IDL.Text,
+  'phone' : IDL.Text,
+  'pincode' : IDL.Text,
+});
+export const NewsletterSubscription = IDL.Record({
+  'subscribedAt' : Time,
+  'email' : IDL.Text,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'blockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'changeCustomerPassword' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+      [],
+    ),
   'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
   'getAllConsultationRequests' : IDL.Func(
@@ -77,6 +99,16 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
+  'getCustomerProfile' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(CustomerUser)],
+      ['query'],
+    ),
+  'getNewsletterSubscribers' : IDL.Func(
+      [],
+      [IDL.Vec(NewsletterSubscription)],
+      ['query'],
+    ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -84,6 +116,12 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+  'loginCustomer' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text })],
+      [],
+    ),
+  'logoutCustomer' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'registerAdminSession' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [IDL.Bool],
@@ -91,6 +129,21 @@ export const idlService = IDL.Service({
     ),
   'removeAdminSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'signupCustomer' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+      ],
+      [IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text })],
+      [],
+    ),
   'submitConsultationRequest' : IDL.Func(
       [
         IDL.Text,
@@ -104,7 +157,23 @@ export const idlService = IDL.Service({
       [IDL.Bool],
       [],
     ),
+  'subscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'unsubscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  'updateCustomerProfile' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+      ],
+      [IDL.Bool],
+      [],
+    ),
   'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
   'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
 });
@@ -165,11 +234,33 @@ export const idlFactory = ({ IDL }) => {
     'phone' : IDL.Opt(IDL.Text),
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const CustomerUser = IDL.Record({
+    'id' : IDL.Nat,
+    'country' : IDL.Text,
+    'city' : IDL.Text,
+    'createdAt' : Time,
+    'fullName' : IDL.Text,
+    'email' : IDL.Text,
+    'state' : IDL.Text,
+    'addressLine' : IDL.Text,
+    'passwordHash' : IDL.Text,
+    'phone' : IDL.Text,
+    'pincode' : IDL.Text,
+  });
+  const NewsletterSubscription = IDL.Record({
+    'subscribedAt' : Time,
+    'email' : IDL.Text,
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'blockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'changeCustomerPassword' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+        [],
+      ),
     'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
     'getAllConsultationRequests' : IDL.Func(
@@ -181,6 +272,16 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getConsultationRequestCount' : IDL.Func([], [IDL.Nat], ['query']),
+    'getCustomerProfile' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(CustomerUser)],
+        ['query'],
+      ),
+    'getNewsletterSubscribers' : IDL.Func(
+        [],
+        [IDL.Vec(NewsletterSubscription)],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -188,6 +289,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'loginCustomer' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text })],
+        [],
+      ),
+    'logoutCustomer' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'registerAdminSession' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [IDL.Bool],
@@ -195,6 +302,21 @@ export const idlFactory = ({ IDL }) => {
       ),
     'removeAdminSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'signupCustomer' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+        ],
+        [IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text })],
+        [],
+      ),
     'submitConsultationRequest' : IDL.Func(
         [
           IDL.Text,
@@ -208,7 +330,23 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'subscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'unsubscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'updateCustomerProfile' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+        ],
+        [IDL.Bool],
+        [],
+      ),
     'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
     'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
   });
