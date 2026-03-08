@@ -9,9 +9,9 @@ import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   type Priority = { #low; #medium; #high };
   type Status = { #new_; #inProgress; #completed };
@@ -79,6 +79,38 @@ actor {
     subscribedAt : Time.Time;
   };
 
+  // Vendor application types
+  public type VendorApplicationStatus = {
+    #pending;
+    #approved;
+    #rejected;
+  };
+
+  public type VendorApplication = {
+    id : Nat;
+    businessName : Text;
+    businessType : Text;
+    yearsInBusiness : Text;
+    businessDescription : Text;
+    ownerName : Text;
+    email : Text;
+    phone : Text;
+    addressLine : Text;
+    city : Text;
+    state : Text;
+    country : Text;
+    pincode : Text;
+    productTypes : Text;
+    categories : Text;
+    approxProducts : Text;
+    gstNumber : Text;
+    offersShipping : Bool;
+    offersLocalDelivery : Bool;
+    serviceableAreas : Text;
+    status : VendorApplicationStatus;
+    submittedAt : Time.Time;
+  };
+
   // Data stores
   let requests = Map.empty<Nat, ConsultationRequest>();
   var currentId = 0;
@@ -88,6 +120,9 @@ actor {
 
   let customerSessions = Map.empty<Text, CustomerSession>();
   let newsletterSubs = Map.empty<Text, NewsletterSubscription>();
+
+  let vendorApplications = Map.empty<Nat, VendorApplication>();
+  var currentVendorId = 0;
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -333,11 +368,7 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view all consultation requests");
     };
-    let allRequests = List.empty<ConsultationRequest>();
-    for (request in requests.values()) {
-      allRequests.add(request);
-    };
-    allRequests.reverse().toArray().sort();
+    requests.values().toArray();
   };
 
   public query ({ caller }) func getConsultationRequestCount() : async Nat {
@@ -383,6 +414,102 @@ actor {
       case (?request) {
         let updatedRequest = { request with status };
         requests.add(id, updatedRequest);
+        true;
+      };
+    };
+  };
+
+  // Vendor application functions
+  public shared ({ caller }) func submitVendorApplication(
+    businessName : Text,
+    businessType : Text,
+    yearsInBusiness : Text,
+    businessDescription : Text,
+    ownerName : Text,
+    email : Text,
+    phone : Text,
+    addressLine : Text,
+    city : Text,
+    state : Text,
+    country : Text,
+    pincode : Text,
+    productTypes : Text,
+    categories : Text,
+    approxProducts : Text,
+    gstNumber : Text,
+    offersShipping : Bool,
+    offersLocalDelivery : Bool,
+    serviceableAreas : Text,
+  ) : async {
+    #ok : Nat;
+    #err : Text;
+  } {
+    // No authorization check - anyone including guests can submit vendor applications
+    let application : VendorApplication = {
+      id = currentVendorId;
+      businessName;
+      businessType;
+      yearsInBusiness;
+      businessDescription;
+      ownerName;
+      email;
+      phone;
+      addressLine;
+      city;
+      state;
+      country;
+      pincode;
+      productTypes;
+      categories;
+      approxProducts;
+      gstNumber;
+      offersShipping;
+      offersLocalDelivery;
+      serviceableAreas;
+      status = #pending;
+      submittedAt = Time.now();
+    };
+    vendorApplications.add(currentVendorId, application);
+    currentVendorId += 1;
+    #ok(application.id);
+  };
+
+  public query ({ caller }) func getAllVendorApplications() : async [VendorApplication] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all vendor applications");
+    };
+    vendorApplications.values().toArray();
+  };
+
+  public query ({ caller }) func getVendorApplicationCount() : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view vendor application count");
+    };
+    vendorApplications.size();
+  };
+
+  public shared ({ caller }) func updateVendorApplicationStatus(id : Nat, status : VendorApplicationStatus) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can update vendor application status");
+    };
+    switch (vendorApplications.get(id)) {
+      case (null) { false };
+      case (?application) {
+        let updatedApplication = { application with status };
+        vendorApplications.add(id, updatedApplication);
+        true;
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteVendorApplication(id : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can delete vendor applications");
+    };
+    switch (vendorApplications.get(id)) {
+      case (null) { false };
+      case (?_application) {
+        vendorApplications.remove(id);
         true;
       };
     };

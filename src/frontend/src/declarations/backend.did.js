@@ -60,6 +60,35 @@ export const ConsultationRequest = IDL.Record({
   'priority' : Priority,
   'phone' : IDL.Opt(IDL.Text),
 });
+export const VendorApplicationStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const VendorApplication = IDL.Record({
+  'id' : IDL.Nat,
+  'categories' : IDL.Text,
+  'status' : VendorApplicationStatus,
+  'country' : IDL.Text,
+  'ownerName' : IDL.Text,
+  'productTypes' : IDL.Text,
+  'serviceableAreas' : IDL.Text,
+  'gstNumber' : IDL.Text,
+  'city' : IDL.Text,
+  'approxProducts' : IDL.Text,
+  'businessName' : IDL.Text,
+  'businessType' : IDL.Text,
+  'submittedAt' : Time,
+  'email' : IDL.Text,
+  'state' : IDL.Text,
+  'offersLocalDelivery' : IDL.Bool,
+  'addressLine' : IDL.Text,
+  'phone' : IDL.Text,
+  'pincode' : IDL.Text,
+  'yearsInBusiness' : IDL.Text,
+  'businessDescription' : IDL.Text,
+  'offersShipping' : IDL.Bool,
+});
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const CustomerUser = IDL.Record({
   'id' : IDL.Nat,
@@ -89,10 +118,16 @@ export const idlService = IDL.Service({
       [],
     ),
   'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+  'deleteVendorApplication' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
   'getAllConsultationRequests' : IDL.Func(
       [],
       [IDL.Vec(ConsultationRequest)],
+      ['query'],
+    ),
+  'getAllVendorApplications' : IDL.Func(
+      [],
+      [IDL.Vec(VendorApplication)],
       ['query'],
     ),
   'getBlockedSessions' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
@@ -114,6 +149,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getVendorApplicationCount' : IDL.Func([], [IDL.Nat], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
   'loginCustomer' : IDL.Func(
@@ -157,6 +193,31 @@ export const idlService = IDL.Service({
       [IDL.Bool],
       [],
     ),
+  'submitVendorApplication' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Bool,
+        IDL.Bool,
+        IDL.Text,
+      ],
+      [IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text })],
+      [],
+    ),
   'subscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
   'unsubscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
@@ -176,6 +237,11 @@ export const idlService = IDL.Service({
     ),
   'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
   'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
+  'updateVendorApplicationStatus' : IDL.Func(
+      [IDL.Nat, VendorApplicationStatus],
+      [IDL.Bool],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -233,6 +299,35 @@ export const idlFactory = ({ IDL }) => {
     'priority' : Priority,
     'phone' : IDL.Opt(IDL.Text),
   });
+  const VendorApplicationStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'approved' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const VendorApplication = IDL.Record({
+    'id' : IDL.Nat,
+    'categories' : IDL.Text,
+    'status' : VendorApplicationStatus,
+    'country' : IDL.Text,
+    'ownerName' : IDL.Text,
+    'productTypes' : IDL.Text,
+    'serviceableAreas' : IDL.Text,
+    'gstNumber' : IDL.Text,
+    'city' : IDL.Text,
+    'approxProducts' : IDL.Text,
+    'businessName' : IDL.Text,
+    'businessType' : IDL.Text,
+    'submittedAt' : Time,
+    'email' : IDL.Text,
+    'state' : IDL.Text,
+    'offersLocalDelivery' : IDL.Bool,
+    'addressLine' : IDL.Text,
+    'phone' : IDL.Text,
+    'pincode' : IDL.Text,
+    'yearsInBusiness' : IDL.Text,
+    'businessDescription' : IDL.Text,
+    'offersShipping' : IDL.Bool,
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const CustomerUser = IDL.Record({
     'id' : IDL.Nat,
@@ -262,10 +357,16 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'deleteConsultationRequest' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'deleteVendorApplication' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getAllAdminSessions' : IDL.Func([], [IDL.Vec(SessionInfo)], ['query']),
     'getAllConsultationRequests' : IDL.Func(
         [],
         [IDL.Vec(ConsultationRequest)],
+        ['query'],
+      ),
+    'getAllVendorApplications' : IDL.Func(
+        [],
+        [IDL.Vec(VendorApplication)],
         ['query'],
       ),
     'getBlockedSessions' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
@@ -287,6 +388,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getVendorApplicationCount' : IDL.Func([], [IDL.Nat], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isSessionBlocked' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'loginCustomer' : IDL.Func(
@@ -330,6 +432,31 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'submitVendorApplication' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Bool,
+          IDL.Bool,
+          IDL.Text,
+        ],
+        [IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text })],
+        [],
+      ),
     'subscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'unblockSession' : IDL.Func([IDL.Text], [IDL.Bool], []),
     'unsubscribeNewsletter' : IDL.Func([IDL.Text], [IDL.Bool], []),
@@ -349,6 +476,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'updateRequestPriority' : IDL.Func([IDL.Nat, Priority], [IDL.Bool], []),
     'updateRequestStatus' : IDL.Func([IDL.Nat, Status], [IDL.Bool], []),
+    'updateVendorApplicationStatus' : IDL.Func(
+        [IDL.Nat, VendorApplicationStatus],
+        [IDL.Bool],
+        [],
+      ),
   });
 };
 

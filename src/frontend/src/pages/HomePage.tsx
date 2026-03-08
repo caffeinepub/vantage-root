@@ -932,6 +932,13 @@ export default function HomePage() {
               >
                 Sign In
               </Link>
+              <Link
+                to="/sell-with-us"
+                data-ocid="footer.sell_link"
+                className="hover:text-[oklch(0.62_0.12_45)] transition-colors"
+              >
+                Sell With Us
+              </Link>
             </nav>
 
             {/* Newsletter */}

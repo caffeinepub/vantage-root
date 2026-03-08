@@ -1,41 +1,36 @@
 # Plantly
 
 ## Current State
-- Marketing site with hero, services, plants/planters showcase, and balcony transformation sections
-- Consultation booking form (name, email, phone, balcony size, sunlight, style, message)
-- Admin panel at `/admin` with username/password login (`admin` / `plantly2024`)
-- Admin features: view/delete consultation requests, set priority, set status (New/In Progress/Completed), sort
-- Session management at `/admin/sessions` — view active sessions, block/unblock devices
-- Backend stores ConsultationRequests and admin sessions in Motoko
-- Authorization component is installed
+The app has:
+- A marketing homepage with hero, services, plants/planters showcase, and consultation booking form
+- Customer authentication (signup/login/dashboard) at /signup, /login, /dashboard
+- Shop section at /shop with 6 categories, filters, cart, wishlist — all showing "Products Coming Soon"
+- Admin panel at /admin with consultation requests management, priority/status cycling, delete, and a Shop tab (static placeholder)
+- Session management at /admin/sessions
+- Backend stores: ConsultationRequest, CustomerUser, CustomerSession, NewsletterSubscription
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Customer signup page** (`/signup`): form with Full Name, Email, Password, Phone Number, Delivery Address (required), plus optional City, State, Country, Pincode fields
-- **Customer login page** (`/login`): form with Email + Password
-- **User dashboard page** (`/dashboard`): shows saved address, wishlist (empty placeholder), order history (empty placeholder), newsletter subscriptions (empty placeholder), account settings (change name/address/password)
-- **Backend: CustomerUser type** — stores full name, email, hashed password (salted), phone, full address fields
-- **Backend: customer auth functions** — `signupCustomer`, `loginCustomer` (returns session token), `logoutCustomer`, `getCustomerProfile`, `updateCustomerProfile`
-- **Navbar links**: add "Login" and "Sign Up" buttons; when logged in show user's name + "Dashboard" + "Logout"
-- **Newsletter subscription field** on homepage and footer (email input + subscribe button, stores email in backend)
-- **Backend: newsletter subscriptions** — `subscribeNewsletter(email)`, `getNewsletterSubscribers()` (admin only)
+- New "Sell With Us" page at /sell-with-us with a detailed vendor registration form
+- Backend VendorApplication type and storage with full CRUD for admin
+- Admin panel "Vendors" tab showing pending/approved/rejected applications with approve/reject actions
+- Navbar link to "Sell With Us" page
+- Footer link to "Sell With Us" page
 
 ### Modify
-- Navbar to include auth state (login/signup links vs logged-in user menu)
-- Footer to include newsletter subscription widget
+- Backend main.mo: add VendorApplication type, submitVendorApplication (public), getAllVendorApplications (admin), updateVendorApplicationStatus (admin), deleteVendorApplication (admin)
+- AdminPage.tsx: add "Vendors" tab with approval workflow (approve/reject/delete) and application details view
+- Navbar: add "Sell With Us" link
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Add `CustomerUser`, `CustomerSession`, `NewsletterSubscription` types to backend
-2. Add `signupCustomer`, `loginCustomer`, `logoutCustomer`, `getCustomerProfile`, `updateCustomerProfile` functions
-3. Add `subscribeNewsletter`, `getNewsletterSubscribers` functions
-4. Regenerate `backend.d.ts`
-5. Create `/signup` page with full registration form
-6. Create `/login` page with email/password form
-7. Create `/dashboard` page with profile, address, wishlist placeholder, order history placeholder
-8. Update navbar with auth-aware links
-9. Add newsletter subscription widget to homepage and footer
-10. Add routes for `/signup`, `/login`, `/dashboard`
+1. Update backend main.mo with VendorApplication type and all vendor functions
+2. Update backend.d.ts with new types and function signatures
+3. Create SellWithUsPage.tsx with the full vendor registration form (business info, contact, location, products, verification, logistics, agreement)
+4. Add route for /sell-with-us in routeTree and App routing
+5. Update AdminPage.tsx to add a Vendors tab with table, status badges, approve/reject/delete actions, and application detail modal
+6. Update Navbar to include "Sell With Us" link
+7. Update Footer to include "Sell With Us" link

@@ -89,30 +89,10 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface SessionInfo {
-    timezone: string;
-    loginTime: bigint;
-    token: string;
-    ipHint: string;
-    deviceInfo: string;
-}
 export type Time = bigint;
 export interface NewsletterSubscription {
     subscribedAt: Time;
     email: string;
-}
-export interface CustomerUser {
-    id: bigint;
-    country: string;
-    city: string;
-    createdAt: Time;
-    fullName: string;
-    email: string;
-    state: string;
-    addressLine: string;
-    passwordHash: string;
-    phone: string;
-    pincode: string;
 }
 export interface ConsultationRequest {
     id: bigint;
@@ -126,6 +106,50 @@ export interface ConsultationRequest {
     timestamp: Time;
     priority: Priority;
     phone?: string;
+}
+export interface SessionInfo {
+    timezone: string;
+    loginTime: bigint;
+    token: string;
+    ipHint: string;
+    deviceInfo: string;
+}
+export interface VendorApplication {
+    id: bigint;
+    categories: string;
+    status: VendorApplicationStatus;
+    country: string;
+    ownerName: string;
+    productTypes: string;
+    serviceableAreas: string;
+    gstNumber: string;
+    city: string;
+    approxProducts: string;
+    businessName: string;
+    businessType: string;
+    submittedAt: Time;
+    email: string;
+    state: string;
+    offersLocalDelivery: boolean;
+    addressLine: string;
+    phone: string;
+    pincode: string;
+    yearsInBusiness: string;
+    businessDescription: string;
+    offersShipping: boolean;
+}
+export interface CustomerUser {
+    id: bigint;
+    country: string;
+    city: string;
+    createdAt: Time;
+    fullName: string;
+    email: string;
+    state: string;
+    addressLine: string;
+    passwordHash: string;
+    phone: string;
+    pincode: string;
 }
 export interface UserProfile {
     name: string;
@@ -161,6 +185,11 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export enum VendorApplicationStatus {
+    pending = "pending",
+    approved = "approved",
+    rejected = "rejected"
+}
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
@@ -173,8 +202,10 @@ export interface backendInterface {
         err: string;
     }>;
     deleteConsultationRequest(id: bigint): Promise<boolean>;
+    deleteVendorApplication(id: bigint): Promise<boolean>;
     getAllAdminSessions(): Promise<Array<SessionInfo>>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
+    getAllVendorApplications(): Promise<Array<VendorApplication>>;
     getBlockedSessions(): Promise<Array<string>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -182,6 +213,7 @@ export interface backendInterface {
     getCustomerProfile(token: string): Promise<CustomerUser | null>;
     getNewsletterSubscribers(): Promise<Array<NewsletterSubscription>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getVendorApplicationCount(): Promise<bigint>;
     isCallerAdmin(): Promise<boolean>;
     isSessionBlocked(token: string): Promise<boolean>;
     loginCustomer(email: string, password: string): Promise<{
@@ -203,14 +235,22 @@ export interface backendInterface {
         err: string;
     }>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    submitVendorApplication(businessName: string, businessType: string, yearsInBusiness: string, businessDescription: string, ownerName: string, email: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string, productTypes: string, categories: string, approxProducts: string, gstNumber: string, offersShipping: boolean, offersLocalDelivery: boolean, serviceableAreas: string): Promise<{
+        __kind__: "ok";
+        ok: bigint;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     subscribeNewsletter(email: string): Promise<boolean>;
     unblockSession(token: string): Promise<boolean>;
     unsubscribeNewsletter(email: string): Promise<boolean>;
     updateCustomerProfile(token: string, fullName: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string): Promise<boolean>;
     updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
     updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
+    updateVendorApplicationStatus(id: bigint, status: VendorApplicationStatus): Promise<boolean>;
 }
-import type { BalconySize as _BalconySize, ConsultationRequest as _ConsultationRequest, CustomerUser as _CustomerUser, Priority as _Priority, Status as _Status, StylePreference as _StylePreference, SunlightExposure as _SunlightExposure, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { BalconySize as _BalconySize, ConsultationRequest as _ConsultationRequest, CustomerUser as _CustomerUser, Priority as _Priority, Status as _Status, StylePreference as _StylePreference, SunlightExposure as _SunlightExposure, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, VendorApplication as _VendorApplication, VendorApplicationStatus as _VendorApplicationStatus } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -289,6 +329,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteVendorApplication(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteVendorApplication(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteVendorApplication(arg0);
+            return result;
+        }
+    }
     async getAllAdminSessions(): Promise<Array<SessionInfo>> {
         if (this.processError) {
             try {
@@ -317,6 +371,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n4(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getAllVendorApplications(): Promise<Array<VendorApplication>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllVendorApplications();
+                return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllVendorApplications();
+            return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getBlockedSessions(): Promise<Array<string>> {
         if (this.processError) {
             try {
@@ -335,28 +403,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n19(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n24(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n19(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n24(this._uploadFile, this._downloadFile, result);
         }
     }
     async getConsultationRequestCount(): Promise<bigint> {
@@ -377,14 +445,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCustomerProfile(arg0);
-                return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCustomerProfile(arg0);
-            return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getNewsletterSubscribers(): Promise<Array<NewsletterSubscription>> {
@@ -405,14 +473,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n23(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getVendorApplicationCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getVendorApplicationCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getVendorApplicationCount();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -453,14 +535,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.loginCustomer(arg0, arg1);
-                return from_candid_variant_n22(this._uploadFile, this._downloadFile, result);
+                return from_candid_variant_n27(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.loginCustomer(arg0, arg1);
-            return from_candid_variant_n22(this._uploadFile, this._downloadFile, result);
+            return from_candid_variant_n27(this._uploadFile, this._downloadFile, result);
         }
     }
     async logoutCustomer(arg0: string): Promise<boolean> {
@@ -529,28 +611,48 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.signupCustomer(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-                return from_candid_variant_n23(this._uploadFile, this._downloadFile, result);
+                return from_candid_variant_n28(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.signupCustomer(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-            return from_candid_variant_n23(this._uploadFile, this._downloadFile, result);
+            return from_candid_variant_n28(this._uploadFile, this._downloadFile, result);
         }
     }
     async submitConsultationRequest(arg0: string, arg1: string, arg2: string | null, arg3: BalconySize, arg4: SunlightExposure, arg5: StylePreference, arg6: string): Promise<boolean> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n24(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n25(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n27(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n29(this._uploadFile, this._downloadFile, arg5), arg6);
+                const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n29(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n30(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n32(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n34(this._uploadFile, this._downloadFile, arg5), arg6);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n24(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n25(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n27(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n29(this._uploadFile, this._downloadFile, arg5), arg6);
+            const result = await this.actor.submitConsultationRequest(arg0, arg1, to_candid_opt_n29(this._uploadFile, this._downloadFile, arg2), to_candid_BalconySize_n30(this._uploadFile, this._downloadFile, arg3), to_candid_SunlightExposure_n32(this._uploadFile, this._downloadFile, arg4), to_candid_StylePreference_n34(this._uploadFile, this._downloadFile, arg5), arg6);
             return result;
+        }
+    }
+    async submitVendorApplication(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: string, arg7: string, arg8: string, arg9: string, arg10: string, arg11: string, arg12: string, arg13: string, arg14: string, arg15: string, arg16: boolean, arg17: boolean, arg18: string): Promise<{
+        __kind__: "ok";
+        ok: bigint;
+    } | {
+        __kind__: "err";
+        err: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitVendorApplication(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+                return from_candid_variant_n28(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitVendorApplication(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
+            return from_candid_variant_n28(this._uploadFile, this._downloadFile, result);
         }
     }
     async subscribeNewsletter(arg0: string): Promise<boolean> {
@@ -612,28 +714,42 @@ export class Backend implements backendInterface {
     async updateRequestPriority(arg0: bigint, arg1: Priority): Promise<boolean> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n31(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n36(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n31(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.updateRequestPriority(arg0, to_candid_Priority_n36(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
     async updateRequestStatus(arg0: bigint, arg1: Status): Promise<boolean> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n33(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n38(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n33(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.updateRequestStatus(arg0, to_candid_Status_n38(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async updateVendorApplicationStatus(arg0: bigint, arg1: VendorApplicationStatus): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateVendorApplicationStatus(arg0, to_candid_VendorApplicationStatus_n40(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateVendorApplicationStatus(arg0, to_candid_VendorApplicationStatus_n40(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -656,17 +772,95 @@ function from_candid_StylePreference_n11(_uploadFile: (file: ExternalBlob) => Pr
 function from_candid_SunlightExposure_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SunlightExposure): SunlightExposure {
     return from_candid_variant_n10(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n20(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n25(_uploadFile, _downloadFile, value);
+}
+function from_candid_VendorApplicationStatus_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VendorApplicationStatus): VendorApplicationStatus {
+    return from_candid_variant_n22(_uploadFile, _downloadFile, value);
+}
+function from_candid_VendorApplication_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VendorApplication): VendorApplication {
+    return from_candid_record_n20(_uploadFile, _downloadFile, value);
 }
 function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CustomerUser]): CustomerUser | null {
+function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CustomerUser]): CustomerUser | null {
     return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: bigint;
+    categories: string;
+    status: _VendorApplicationStatus;
+    country: string;
+    ownerName: string;
+    productTypes: string;
+    serviceableAreas: string;
+    gstNumber: string;
+    city: string;
+    approxProducts: string;
+    businessName: string;
+    businessType: string;
+    submittedAt: _Time;
+    email: string;
+    state: string;
+    offersLocalDelivery: boolean;
+    addressLine: string;
+    phone: string;
+    pincode: string;
+    yearsInBusiness: string;
+    businessDescription: string;
+    offersShipping: boolean;
+}): {
+    id: bigint;
+    categories: string;
+    status: VendorApplicationStatus;
+    country: string;
+    ownerName: string;
+    productTypes: string;
+    serviceableAreas: string;
+    gstNumber: string;
+    city: string;
+    approxProducts: string;
+    businessName: string;
+    businessType: string;
+    submittedAt: Time;
+    email: string;
+    state: string;
+    offersLocalDelivery: boolean;
+    addressLine: string;
+    phone: string;
+    pincode: string;
+    yearsInBusiness: string;
+    businessDescription: string;
+    offersShipping: boolean;
+} {
+    return {
+        id: value.id,
+        categories: value.categories,
+        status: from_candid_VendorApplicationStatus_n21(_uploadFile, _downloadFile, value.status),
+        country: value.country,
+        ownerName: value.ownerName,
+        productTypes: value.productTypes,
+        serviceableAreas: value.serviceableAreas,
+        gstNumber: value.gstNumber,
+        city: value.city,
+        approxProducts: value.approxProducts,
+        businessName: value.businessName,
+        businessType: value.businessType,
+        submittedAt: value.submittedAt,
+        email: value.email,
+        state: value.state,
+        offersLocalDelivery: value.offersLocalDelivery,
+        addressLine: value.addressLine,
+        phone: value.phone,
+        pincode: value.pincode,
+        yearsInBusiness: value.yearsInBusiness,
+        businessDescription: value.businessDescription,
+        offersShipping: value.offersShipping
+    };
 }
 function from_candid_record_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
@@ -745,7 +939,16 @@ function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): Priority {
     return "low" in value ? Priority.low : "high" in value ? Priority.high : "medium" in value ? Priority.medium : value;
 }
-function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    pending: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+}): VendorApplicationStatus {
+    return "pending" in value ? VendorApplicationStatus.pending : "approved" in value ? VendorApplicationStatus.approved : "rejected" in value ? VendorApplicationStatus.rejected : value;
+}
+function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -754,7 +957,7 @@ function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     ok: string;
 } | {
     err: string;
@@ -773,7 +976,7 @@ function from_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Ui
         err: value.err
     } : value;
 }
-function from_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     ok: bigint;
 } | {
     err: string;
@@ -820,28 +1023,34 @@ function from_candid_variant_n8(_uploadFile: (file: ExternalBlob) => Promise<Uin
 }): Status {
     return "new" in value ? Status.new : "completed" in value ? Status.completed : "inProgress" in value ? Status.inProgress : value;
 }
+function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_VendorApplication>): Array<VendorApplication> {
+    return value.map((x)=>from_candid_VendorApplication_n19(_uploadFile, _downloadFile, x));
+}
 function from_candid_vec_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ConsultationRequest>): Array<ConsultationRequest> {
     return value.map((x)=>from_candid_ConsultationRequest_n5(_uploadFile, _downloadFile, x));
 }
-function to_candid_BalconySize_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): _BalconySize {
-    return to_candid_variant_n26(_uploadFile, _downloadFile, value);
+function to_candid_BalconySize_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): _BalconySize {
+    return to_candid_variant_n31(_uploadFile, _downloadFile, value);
 }
-function to_candid_Priority_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): _Priority {
-    return to_candid_variant_n32(_uploadFile, _downloadFile, value);
+function to_candid_Priority_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): _Priority {
+    return to_candid_variant_n37(_uploadFile, _downloadFile, value);
 }
-function to_candid_Status_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): _Status {
-    return to_candid_variant_n34(_uploadFile, _downloadFile, value);
+function to_candid_Status_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): _Status {
+    return to_candid_variant_n39(_uploadFile, _downloadFile, value);
 }
-function to_candid_StylePreference_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): _StylePreference {
-    return to_candid_variant_n30(_uploadFile, _downloadFile, value);
+function to_candid_StylePreference_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): _StylePreference {
+    return to_candid_variant_n35(_uploadFile, _downloadFile, value);
 }
-function to_candid_SunlightExposure_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): _SunlightExposure {
-    return to_candid_variant_n28(_uploadFile, _downloadFile, value);
+function to_candid_SunlightExposure_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): _SunlightExposure {
+    return to_candid_variant_n33(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
 }
-function to_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+function to_candid_VendorApplicationStatus_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VendorApplicationStatus): _VendorApplicationStatus {
+    return to_candid_variant_n41(_uploadFile, _downloadFile, value);
+}
+function to_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
 }
 function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
@@ -859,7 +1068,7 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): {
+function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BalconySize): {
     large: null;
 } | {
     small: null;
@@ -874,7 +1083,7 @@ function to_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint
         medium: null
     } : value;
 }
-function to_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): {
+function to_candid_variant_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SunlightExposure): {
     partialShade: null;
 } | {
     fullSun: null;
@@ -889,7 +1098,7 @@ function to_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint
         fullShade: null
     } : value;
 }
-function to_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): {
+function to_candid_variant_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: StylePreference): {
     tropical: null;
 } | {
     minimalist: null;
@@ -908,7 +1117,7 @@ function to_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint
         modern: null
     } : value;
 }
-function to_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): {
+function to_candid_variant_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Priority): {
     low: null;
 } | {
     high: null;
@@ -923,7 +1132,7 @@ function to_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint
         medium: null
     } : value;
 }
-function to_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): {
+function to_candid_variant_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Status): {
     new: null;
 } | {
     completed: null;
@@ -936,6 +1145,21 @@ function to_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint
         completed: null
     } : value == Status.inProgress ? {
         inProgress: null
+    } : value;
+}
+function to_candid_variant_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VendorApplicationStatus): {
+    pending: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+} {
+    return value == VendorApplicationStatus.pending ? {
+        pending: null
+    } : value == VendorApplicationStatus.approved ? {
+        approved: null
+    } : value == VendorApplicationStatus.rejected ? {
+        rejected: null
     } : value;
 }
 export interface CreateActorOptions {

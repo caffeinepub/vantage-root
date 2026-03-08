@@ -10,7 +10,9 @@ import ConsultPage from "./pages/ConsultPage";
 import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import SellWithUsPage from "./pages/SellWithUsPage";
 import SessionsPage from "./pages/SessionsPage";
+import ShopPage from "./pages/ShopPage";
 import SignupPage from "./pages/SignupPage";
 
 const rootRoute = createRootRoute({
@@ -59,6 +61,18 @@ const dashboardRoute = createRoute({
   component: DashboardPage,
 });
 
+const shopRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/shop",
+  component: ShopPage,
+});
+
+const sellWithUsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sell-with-us",
+  component: SellWithUsPage,
+});
+
 export const routeTree = rootRoute.addChildren([
   indexRoute,
   consultRoute,
@@ -67,6 +81,8 @@ export const routeTree = rootRoute.addChildren([
   signupRoute,
   loginRoute,
   dashboardRoute,
+  shopRoute,
+  sellWithUsRoute,
 ]);
 
 export { Outlet };

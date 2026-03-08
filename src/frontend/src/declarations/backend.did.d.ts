@@ -68,6 +68,33 @@ export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface VendorApplication {
+  'id' : bigint,
+  'categories' : string,
+  'status' : VendorApplicationStatus,
+  'country' : string,
+  'ownerName' : string,
+  'productTypes' : string,
+  'serviceableAreas' : string,
+  'gstNumber' : string,
+  'city' : string,
+  'approxProducts' : string,
+  'businessName' : string,
+  'businessType' : string,
+  'submittedAt' : Time,
+  'email' : string,
+  'state' : string,
+  'offersLocalDelivery' : boolean,
+  'addressLine' : string,
+  'phone' : string,
+  'pincode' : string,
+  'yearsInBusiness' : string,
+  'businessDescription' : string,
+  'offersShipping' : boolean,
+}
+export type VendorApplicationStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
@@ -78,8 +105,10 @@ export interface _SERVICE {
       { 'err' : string }
   >,
   'deleteConsultationRequest' : ActorMethod<[bigint], boolean>,
+  'deleteVendorApplication' : ActorMethod<[bigint], boolean>,
   'getAllAdminSessions' : ActorMethod<[], Array<SessionInfo>>,
   'getAllConsultationRequests' : ActorMethod<[], Array<ConsultationRequest>>,
+  'getAllVendorApplications' : ActorMethod<[], Array<VendorApplication>>,
   'getBlockedSessions' : ActorMethod<[], Array<string>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
@@ -87,6 +116,7 @@ export interface _SERVICE {
   'getCustomerProfile' : ActorMethod<[string], [] | [CustomerUser]>,
   'getNewsletterSubscribers' : ActorMethod<[], Array<NewsletterSubscription>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getVendorApplicationCount' : ActorMethod<[], bigint>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isSessionBlocked' : ActorMethod<[string], boolean>,
   'loginCustomer' : ActorMethod<
@@ -118,6 +148,31 @@ export interface _SERVICE {
     ],
     boolean
   >,
+  'submitVendorApplication' : ActorMethod<
+    [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      boolean,
+      boolean,
+      string,
+    ],
+    { 'ok' : bigint } |
+      { 'err' : string }
+  >,
   'subscribeNewsletter' : ActorMethod<[string], boolean>,
   'unblockSession' : ActorMethod<[string], boolean>,
   'unsubscribeNewsletter' : ActorMethod<[string], boolean>,
@@ -127,6 +182,10 @@ export interface _SERVICE {
   >,
   'updateRequestPriority' : ActorMethod<[bigint, Priority], boolean>,
   'updateRequestStatus' : ActorMethod<[bigint, Status], boolean>,
+  'updateVendorApplicationStatus' : ActorMethod<
+    [bigint, VendorApplicationStatus],
+    boolean
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

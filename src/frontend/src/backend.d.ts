@@ -7,30 +7,10 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface SessionInfo {
-    timezone: string;
-    loginTime: bigint;
-    token: string;
-    ipHint: string;
-    deviceInfo: string;
-}
 export type Time = bigint;
 export interface NewsletterSubscription {
     subscribedAt: Time;
     email: string;
-}
-export interface CustomerUser {
-    id: bigint;
-    country: string;
-    city: string;
-    createdAt: Time;
-    fullName: string;
-    email: string;
-    state: string;
-    addressLine: string;
-    passwordHash: string;
-    phone: string;
-    pincode: string;
 }
 export interface ConsultationRequest {
     id: bigint;
@@ -44,6 +24,50 @@ export interface ConsultationRequest {
     timestamp: Time;
     priority: Priority;
     phone?: string;
+}
+export interface SessionInfo {
+    timezone: string;
+    loginTime: bigint;
+    token: string;
+    ipHint: string;
+    deviceInfo: string;
+}
+export interface VendorApplication {
+    id: bigint;
+    categories: string;
+    status: VendorApplicationStatus;
+    country: string;
+    ownerName: string;
+    productTypes: string;
+    serviceableAreas: string;
+    gstNumber: string;
+    city: string;
+    approxProducts: string;
+    businessName: string;
+    businessType: string;
+    submittedAt: Time;
+    email: string;
+    state: string;
+    offersLocalDelivery: boolean;
+    addressLine: string;
+    phone: string;
+    pincode: string;
+    yearsInBusiness: string;
+    businessDescription: string;
+    offersShipping: boolean;
+}
+export interface CustomerUser {
+    id: bigint;
+    country: string;
+    city: string;
+    createdAt: Time;
+    fullName: string;
+    email: string;
+    state: string;
+    addressLine: string;
+    passwordHash: string;
+    phone: string;
+    pincode: string;
 }
 export interface UserProfile {
     name: string;
@@ -79,6 +103,11 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export enum VendorApplicationStatus {
+    pending = "pending",
+    approved = "approved",
+    rejected = "rejected"
+}
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     blockSession(token: string): Promise<boolean>;
@@ -90,8 +119,10 @@ export interface backendInterface {
         err: string;
     }>;
     deleteConsultationRequest(id: bigint): Promise<boolean>;
+    deleteVendorApplication(id: bigint): Promise<boolean>;
     getAllAdminSessions(): Promise<Array<SessionInfo>>;
     getAllConsultationRequests(): Promise<Array<ConsultationRequest>>;
+    getAllVendorApplications(): Promise<Array<VendorApplication>>;
     getBlockedSessions(): Promise<Array<string>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -99,6 +130,7 @@ export interface backendInterface {
     getCustomerProfile(token: string): Promise<CustomerUser | null>;
     getNewsletterSubscribers(): Promise<Array<NewsletterSubscription>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getVendorApplicationCount(): Promise<bigint>;
     isCallerAdmin(): Promise<boolean>;
     isSessionBlocked(token: string): Promise<boolean>;
     loginCustomer(email: string, password: string): Promise<{
@@ -120,10 +152,18 @@ export interface backendInterface {
         err: string;
     }>;
     submitConsultationRequest(name: string, email: string, phone: string | null, balconySize: BalconySize, sunlightExposure: SunlightExposure, stylePreference: StylePreference, message: string): Promise<boolean>;
+    submitVendorApplication(businessName: string, businessType: string, yearsInBusiness: string, businessDescription: string, ownerName: string, email: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string, productTypes: string, categories: string, approxProducts: string, gstNumber: string, offersShipping: boolean, offersLocalDelivery: boolean, serviceableAreas: string): Promise<{
+        __kind__: "ok";
+        ok: bigint;
+    } | {
+        __kind__: "err";
+        err: string;
+    }>;
     subscribeNewsletter(email: string): Promise<boolean>;
     unblockSession(token: string): Promise<boolean>;
     unsubscribeNewsletter(email: string): Promise<boolean>;
     updateCustomerProfile(token: string, fullName: string, phone: string, addressLine: string, city: string, state: string, country: string, pincode: string): Promise<boolean>;
     updateRequestPriority(id: bigint, priority: Priority): Promise<boolean>;
     updateRequestStatus(id: bigint, status: Status): Promise<boolean>;
+    updateVendorApplicationStatus(id: bigint, status: VendorApplicationStatus): Promise<boolean>;
 }

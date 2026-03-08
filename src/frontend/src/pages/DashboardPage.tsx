@@ -16,13 +16,17 @@ import {
   MapPin,
   Package,
   Settings,
+  ShoppingCart,
+  Trash2,
   User,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import plantlyLogo from "../../public/assets/generated/plantly-logo-transparent.dim_800x200.png";
+import { useCart } from "../context/CartContext";
 import { useCustomerAuth } from "../context/CustomerAuthContext";
+import { useWishlist } from "../context/WishlistContext";
 import { useActor } from "../hooks/useActor";
 
 const fadeUp = {
@@ -685,6 +689,100 @@ function PlaceholderCard({
   );
 }
 
+// ─── Wishlist Section ─────────────────────────────────────────────
+function WishlistSection() {
+  const { items, removeFromWishlist } = useWishlist();
+  const { addToCart } = useCart();
+
+  if (items.length === 0) {
+    return (
+      <div
+        data-ocid="dashboard.wishlist.empty_state"
+        className="flex flex-col items-center justify-center py-16 px-6 text-center bg-[oklch(0.20_0.055_150)] border border-[oklch(0.28_0.05_150)] rounded-sm"
+      >
+        <div className="w-14 h-14 rounded-full bg-[oklch(0.28_0.06_150)] flex items-center justify-center mb-4">
+          <Heart size={24} className="text-[oklch(0.50_0.04_140)]" />
+        </div>
+        <h3 className="font-display text-xl font-light text-white mb-2">
+          Your Wishlist is Empty
+        </h3>
+        <p className="text-[oklch(0.55_0.03_140)] font-sans text-sm max-w-xs mb-5">
+          Save items from the shop to revisit them later.
+        </p>
+        <Button
+          asChild
+          className="bg-[oklch(0.62_0.12_45)] hover:bg-[oklch(0.55_0.12_45)] text-white font-semibold rounded-sm text-sm"
+        >
+          <Link to="/shop">Browse Shop</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-[oklch(0.55_0.03_140)] font-sans text-sm mb-4">
+        {items.length} saved item{items.length !== 1 ? "s" : ""}
+      </p>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {items.map((product, idx) => (
+          <li
+            key={product.id}
+            data-ocid={`dashboard.wishlist.item.${idx + 1}`}
+            className="flex gap-3 p-3 bg-[oklch(0.20_0.055_150)] border border-[oklch(0.28_0.05_150)] rounded-sm hover:border-[oklch(0.38_0.07_150)] transition-colors"
+          >
+            <div className="w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 bg-[oklch(0.24_0.055_150)]">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-sans text-sm font-medium truncate">
+                {product.name}
+              </p>
+              <p className="text-[oklch(0.50_0.03_140)] font-sans text-xs">
+                {product.category}
+              </p>
+              <p className="text-[oklch(0.65_0.10_45)] font-sans text-xs mt-1">
+                ₹{product.priceFrom.toLocaleString("en-IN")}
+                <span className="text-[oklch(0.42_0.03_140)] ml-1">(est.)</span>
+              </p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    addToCart(product);
+                    toast.success(`Added "${product.name}" to cart`);
+                  }}
+                  className="flex items-center gap-1 text-xs font-sans text-[oklch(0.65_0.10_45)] hover:text-[oklch(0.78_0.10_45)] transition-colors"
+                >
+                  <ShoppingCart size={11} />
+                  Add to cart
+                </button>
+                <button
+                  type="button"
+                  data-ocid={`dashboard.wishlist.delete_button.${idx + 1}`}
+                  onClick={() => {
+                    removeFromWishlist(product.id);
+                    toast.success(`Removed "${product.name}" from wishlist`);
+                  }}
+                  className="flex items-center gap-1 text-xs font-sans text-[oklch(0.45_0.03_140)] hover:text-[oklch(0.68_0.18_25)] transition-colors"
+                >
+                  <Trash2 size={11} />
+                  Remove
+                </button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ─── Main Dashboard Page ──────────────────────────────────────────
 export default function DashboardPage() {
   const { customer, isLoading, logout } = useCustomerAuth();
@@ -825,18 +923,18 @@ export default function DashboardPage() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="wishlist" className="mt-0">
+          <TabsContent
+            value="wishlist"
+            className="mt-0"
+            data-ocid="dashboard.wishlist.tab"
+          >
             <motion.div
               initial="hidden"
               animate="visible"
               variants={fadeUp}
               transition={{ duration: 0.3 }}
             >
-              <PlaceholderCard
-                icon={Heart}
-                title="Your Wishlist is Empty"
-                description="Items you save will appear here."
-              />
+              <WishlistSection />
             </motion.div>
           </TabsContent>
 
