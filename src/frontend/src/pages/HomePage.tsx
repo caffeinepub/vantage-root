@@ -13,6 +13,12 @@ import {
 import { motion } from "motion/react";
 import { useRef } from "react";
 
+import balconyTransform from "../../public/assets/generated/balcony-transform.dim_800x600.jpg";
+import florilicLogo from "../../public/assets/generated/florilic-logo-white-transparent.dim_800x200.png";
+import heroBg from "../../public/assets/generated/hero-balcony.dim_1600x900.jpg";
+import plantersCollection from "../../public/assets/generated/planters-collection.dim_800x600.jpg";
+import plantsShowcase from "../../public/assets/generated/plants-showcase.dim_800x600.jpg";
+
 /* ─── Animation variants ─────────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -145,7 +151,7 @@ export default function HomePage() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/assets/generated/hero-balcony.dim_1600x900.jpg')`,
+            backgroundImage: `url(${heroBg})`,
           }}
         />
         {/* Dark overlay */}
@@ -556,7 +562,7 @@ export default function HomePage() {
             >
               <div className="absolute -inset-4 bg-[oklch(0.88_0.04_140/0.3)] rounded-sm blur-xl" />
               <img
-                src="/assets/generated/plants-showcase.dim_800x600.jpg"
+                src={plantsShowcase}
                 alt="Curated plant selection"
                 className="relative w-full h-80 md:h-96 object-cover rounded-sm shadow-2xl"
                 loading="lazy"
@@ -678,7 +684,7 @@ export default function HomePage() {
             <motion.div variants={fadeUp} className="relative">
               <div className="absolute -inset-4 bg-[oklch(0.62_0.12_45/0.15)] rounded-sm blur-xl" />
               <img
-                src="/assets/generated/planters-collection.dim_800x600.jpg"
+                src={plantersCollection}
                 alt="Designer planter collection"
                 className="relative w-full h-80 md:h-96 object-cover rounded-sm shadow-2xl"
                 loading="lazy"
@@ -694,7 +700,7 @@ export default function HomePage() {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/assets/generated/balcony-transform.dim_800x600.jpg')`,
+            backgroundImage: `url(${balconyTransform})`,
           }}
         />
         <div className="absolute inset-0 bg-[oklch(0.12_0.04_150/0.82)]" />
@@ -851,7 +857,7 @@ export default function HomePage() {
             {/* Brand */}
             <div className="text-center md:text-left">
               <img
-                src="/assets/generated/florilic-logo-white-transparent.dim_800x200.png"
+                src={florilicLogo}
                 alt="Florilic"
                 className="h-10 w-auto mb-3 mx-auto md:mx-0"
               />

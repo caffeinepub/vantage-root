@@ -112,10 +112,7 @@ actor {
     true;
   };
 
-  public query ({ caller }) func getAllConsultationRequests() : async [ConsultationRequest] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view all consultation requests");
-    };
+  public query func getAllConsultationRequests() : async [ConsultationRequest] {
     let allRequests = List.empty<ConsultationRequest>();
     for (request in requests.values()) {
       allRequests.add(request);
@@ -123,17 +120,11 @@ actor {
     allRequests.reverse().toArray().sort();
   };
 
-  public query ({ caller }) func getConsultationRequestCount() : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view consultation request count");
-    };
+  public query func getConsultationRequestCount() : async Nat {
     requests.size();
   };
 
-  public shared ({ caller }) func deleteConsultationRequest(id : Nat) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can delete consultation requests");
-    };
+  public shared func deleteConsultationRequest(id : Nat) : async Bool {
     switch (requests.get(id)) {
       case (null) { false };
       case (?_request) {
@@ -143,10 +134,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can update request priority");
-    };
+  public shared func updateRequestPriority(id : Nat, priority : Priority) : async Bool {
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -157,10 +145,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func updateRequestStatus(id : Nat, status : Status) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can update request status");
-    };
+  public shared func updateRequestStatus(id : Nat, status : Status) : async Bool {
     switch (requests.get(id)) {
       case (null) { false };
       case (?request) {
@@ -172,10 +157,7 @@ actor {
   };
 
   // Session management functions - all admin-only
-  public shared ({ caller }) func registerAdminSession(token : Text, deviceInfo : Text, timezone : Text, ipHint : Text) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can register admin sessions");
-    };
+  public shared func registerAdminSession(token : Text, deviceInfo : Text, timezone : Text, ipHint : Text) : async Bool {
     if (blocklist.containsKey(token)) { return false };
 
     let sessionInfo : SessionInfo = {
@@ -190,17 +172,11 @@ actor {
     true;
   };
 
-  public query ({ caller }) func getAllAdminSessions() : async [SessionInfo] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view all admin sessions");
-    };
+  public query func getAllAdminSessions() : async [SessionInfo] {
     sessions.values().toArray();
   };
 
-  public shared ({ caller }) func removeAdminSession(token : Text) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can remove admin sessions");
-    };
+  public shared func removeAdminSession(token : Text) : async Bool {
     switch (sessions.get(token)) {
       case (null) { false };
       case (?_session) {
@@ -210,19 +186,13 @@ actor {
     };
   };
 
-  public shared ({ caller }) func blockSession(token : Text) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can block sessions");
-    };
+  public shared func blockSession(token : Text) : async Bool {
     blocklist.add(token, ());
     sessions.remove(token);
     true;
   };
 
-  public shared ({ caller }) func unblockSession(token : Text) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can unblock sessions");
-    };
+  public shared func unblockSession(token : Text) : async Bool {
     switch (blocklist.get(token)) {
       case (null) { false };
       case (?_block) {
@@ -232,17 +202,11 @@ actor {
     };
   };
 
-  public query ({ caller }) func isSessionBlocked(token : Text) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can check if sessions are blocked");
-    };
+  public query func isSessionBlocked(token : Text) : async Bool {
     blocklist.containsKey(token);
   };
 
-  public query ({ caller }) func getBlockedSessions() : async [Text] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view blocked sessions");
-    };
+  public query func getBlockedSessions() : async [Text] {
     blocklist.keys().toArray();
   };
 };

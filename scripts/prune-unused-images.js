@@ -97,8 +97,17 @@ async function findReferencedImages(assetFiles, generatedImages) {
   const referencedImages = new Set();
 
   for (const filename of generatedImages) {
-    // This catches references in any context: strings, paths, url(), etc.
+    // Check for exact filename match (e.g. from public/ path references)
     if (combinedContent.includes(filename)) {
+      referencedImages.add(filename);
+      continue;
+    }
+    // Vite hashes imported images: "hero-balcony.dim_1600x900.jpg" becomes
+    // "hero-balcony.dim_1600x900-BVyEETNY.jpg" in compiled JS. Check for the
+    // stem (filename without extension) so we catch both forms.
+    const ext = path.extname(filename);
+    const stem = filename.slice(0, filename.length - ext.length);
+    if (stem && combinedContent.includes(stem)) {
       referencedImages.add(filename);
     }
   }

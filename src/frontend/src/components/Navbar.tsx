@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import florilicLogo from "../../public/assets/generated/florilic-logo-white-transparent.dim_800x200.png";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -49,11 +50,7 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img
-            src="/assets/generated/florilic-logo-white-transparent.dim_800x200.png"
-            alt="Florilic"
-            className="h-10 w-auto"
-          />
+          <img src={florilicLogo} alt="Florilic" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop nav */}
